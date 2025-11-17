@@ -1,0 +1,235 @@
+/**
+ * FILE: frontend/src/components/modals/Modal.module.css
+ * PURPOSE: Shared styling for modal components.
+ */
+
+.overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.75);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 1rem;
+  animation: fadeIn 0.2s ease-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.modal {
+  background-color: #1F2937;
+  border: 1px solid #374151;
+  border-radius: 0.75rem;
+  max-width: 32rem;
+  width: 100%;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+  animation: slideUp 0.3s ease-out;
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.5rem;
+  border-bottom: 1px solid #374151;
+}
+
+.title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #F9FAFB;
+}
+
+.closeButton {
+  background: none;
+  border: none;
+  color: #9CA3AF;
+  font-size: 1.5rem;
+  cursor: pointer;
+  padding: 0.25rem;
+  line-height: 1;
+  transition: color 0.2s;
+}
+
+.closeButton:hover {
+  color: #E5E7EB;
+}
+
+.content {
+  padding: 1.5rem;
+}
+
+.message {
+  font-size: 1rem;
+  color: #D1D5DB;
+  line-height: 1.6;
+  margin-bottom: 1rem;
+}
+
+.warning {
+  padding: 0.875rem 1.25rem;
+  background-color: rgba(245, 158, 11, 0.1);
+  border: 1px solid #F59E0B;
+  border-radius: 0.5rem;
+  color: #FCD34D;
+  font-weight: 600;
+  margin-bottom: 1.25rem;
+  text-align: center;
+}
+
+.field {
+  margin-bottom: 1.25rem;
+}
+
+.label {
+  display: block;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #E5E7EB;
+  margin-bottom: 0.5rem;
+}
+
+.label strong {
+  color: #60A5FA;
+}
+
+.input {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  font-size: 0.9375rem;
+  color: #F3F4F6;
+  background-color: #111827;
+  border: 1px solid #374151;
+  border-radius: 0.5rem;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.input:focus {
+  outline: none;
+  border-color: #3B82F6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.input:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.error {
+  padding: 0.75rem 1rem;
+  background-color: rgba(239, 68, 68, 0.1);
+  border: 1px solid #EF4444;
+  border-radius: 0.5rem;
+  color: #FCA5A5;
+  font-size: 0.875rem;
+  margin-top: 1rem;
+}
+
+.footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  padding: 1.5rem;
+  border-top: 1px solid #374151;
+}
+
+.cancelButton {
+  padding: 0.75rem 1.5rem;
+  background-color: transparent;
+  border: 1px solid #374151;
+  border-radius: 0.5rem;
+  color: #9CA3AF;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s, color 0.2s;
+}
+
+.cancelButton:hover:not(:disabled) {
+  background-color: #111827;
+  color: #E5E7EB;
+}
+
+.cancelButton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.confirmButton {
+  padding: 0.75rem 1.5rem;
+  background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%);
+  border: none;
+  border-radius: 0.5rem;
+  color: #FFFFFF;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.confirmButton:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+}
+
+.confirmButton:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.dangerButton {
+  padding: 0.75rem 1.5rem;
+  background: linear-gradient(135deg, #EF4444 0%, #DC2626 100%);
+  border: none;
+  border-radius: 0.5rem;
+  color: #FFFFFF;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.dangerButton:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4);
+}
+
+.dangerButton:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+@media (max-width: 640px) {
+  .modal {
+    margin: 1rem;
+  }
+
+  .footer {
+    flex-direction: column-reverse;
+  }
+
+  .cancelButton,
+  .confirmButton,
+  .dangerButton {
+    width: 100%;
+  }
+}
