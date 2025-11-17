@@ -15,6 +15,7 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import App from './App';
+import { AuthProvider } from '@/contexts/AuthContext';
 import '@/styles/global.css';
 
 /**
@@ -32,15 +33,26 @@ if (!rootElement) {
 
 /**
  * Create React root and render application.
+ * Wrapped in StrictMode for development checks.
+ * Wrapped in AuthProvider to enable authentication context globally.
+ *
  * StrictMode enables additional development warnings:
  * - Identifies unsafe lifecycles
  * - Warns about legacy API usage
  * - Detects unexpected side effects
  * - Ensures reusable state
+ *
+ * AuthProvider initializes:
+ * - Auth state from localStorage
+ * - Token refresh logic (checks every 5 minutes)
+ * - Global 401/403 error handling
+ * - Custom hooks for all auth operations
  */
 createRoot(rootElement).render(
   <StrictMode>
-    <App />
+    <AuthProvider>
+      <App />
+    </AuthProvider>
   </StrictMode>
 );
 

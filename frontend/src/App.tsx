@@ -13,7 +13,7 @@
  */
 
 import { useEffect } from 'react';
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { useStore } from '@/store';
 import Layout from '@/components/Layout';
 
@@ -31,6 +31,21 @@ import Updates from '@/pages/Updates';
 import Admin from '@/pages/Admin';
 import Logbook from '@/pages/Logbook';
 import NotFound from '@/pages/NotFound';
+
+// Auth page imports
+import LoginPage from '@/pages/auth/LoginPage';
+import RegisterPage from '@/pages/auth/RegisterPage';
+import ForgotPasswordPage from '@/pages/auth/ForgotPasswordPage';
+import ResetPasswordPage from '@/pages/auth/ResetPasswordPage';
+import VerifyEmailPage from '@/pages/auth/VerifyEmailPage';
+import AdminLoginPage from '@/pages/auth/AdminLoginPage';
+import DashboardPage from '@/pages/DashboardPage';
+import ProfilePage from '@/pages/ProfilePage';
+
+// Route guard components
+import ProtectedRoute from '@/components/auth/ProtectedRoute';
+import AdminRoute from '@/components/auth/AdminRoute';
+import OptionalAuth from '@/components/auth/OptionalAuth';
 
 /**
  * Main App component.
@@ -70,48 +85,71 @@ function App() {
 
   return (
     <BrowserRouter>
-      <Layout>
-        <Routes>
-          {/* Dashboard - Home page */}
+      <Routes>
+        {/* ============================= */}
+        {/* AUTHENTICATION ROUTES (No Layout) */}
+        {/* ============================= */}
+
+        {/* Public auth routes */}
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="/register" element={<RegisterPage />} />
+        <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+        <Route path="/reset-password/:token" element={<ResetPasswordPage />} />
+        <Route path="/verify-email/:token" element={<VerifyEmailPage />} />
+
+        {/* Admin-specific login */}
+        <Route path="/admin/login" element={<AdminLoginPage />} />
+
+        {/* ============================= */}
+        {/* APPLICATION ROUTES (With Layout) */}
+        {/* ============================= */}
+
+        <Route element={<Layout />}>
+          {/* Public routes - accessible to all users */}
           <Route path="/" element={<Dashboard />} />
-
-          {/* Roadmap - 12-week overview */}
           <Route path="/roadmap" element={<Roadmap />} />
-
-          {/* Mission detail - Dynamic route with week and day params */}
           <Route path="/missions/:week/:day" element={<Mission />} />
-
-          {/* Labs index */}
           <Route path="/labs" element={<Labs />} />
-
-          {/* Lab detail - Dynamic route with lab ID */}
           <Route path="/labs/:id" element={<Lab />} />
-
-          {/* Knowledge base index */}
           <Route path="/knowledge" element={<Knowledge />} />
-
-          {/* Knowledge topic detail */}
           <Route path="/knowledge/:topicId" element={<KnowledgeTopic />} />
-
-          {/* Software Galaxy index */}
           <Route path="/software" element={<Software />} />
-
-          {/* Software tool detail */}
           <Route path="/software/:id" element={<SoftwareDetail />} />
-
-          {/* Updates/Changelog */}
           <Route path="/updates" element={<Updates />} />
-
-          {/* Admin panel */}
-          <Route path="/admin" element={<Admin />} />
-
-          {/* Learning logbook */}
           <Route path="/logbook" element={<Logbook />} />
+
+          {/* Protected routes - require authentication */}
+          <Route
+            path="/dashboard"
+            element={
+              <ProtectedRoute>
+                <DashboardPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/profile"
+            element={
+              <ProtectedRoute>
+                <ProfilePage />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* Admin routes - require admin authentication (username === 'metrik') */}
+          <Route
+            path="/admin"
+            element={
+              <AdminRoute>
+                <Admin />
+              </AdminRoute>
+            }
+          />
 
           {/* 404 fallback for unknown routes */}
           <Route path="*" element={<NotFound />} />
-        </Routes>
-      </Layout>
+        </Route>
+      </Routes>
     </BrowserRouter>
   );
 }
