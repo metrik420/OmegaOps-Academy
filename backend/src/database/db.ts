@@ -287,6 +287,29 @@ export function initializeDatabase(): Database.Database {
     db.exec(SCHEMA);
     logger.info('Database schema initialized successfully');
 
+    /*
+     * Run authentication tables migration.
+     * This creates users, refresh_tokens, password_reset_tokens, auth_logs, admin_users tables.
+     * Migration is idempotent (CREATE TABLE IF NOT EXISTS).
+     */
+    logger.info('Running authentication tables migration...');
+    const { up: authMigrationUp } = require('./migrations/002_auth_tables');
+    authMigrationUp(db);
+    logger.info('Authentication tables migration completed');
+
+    /*
+     * Seed admin user if not exists.
+     * Creates the single admin account (metrik / metrikcorp@gmail.com / Cooldog420).
+     * This is idempotent and safe to run on every startup.
+     */
+    logger.info('Seeding admin user...');
+    const { seedAdmin } = require('./seeds/seedAdmin');
+    seedAdmin().catch((error: Error) => {
+      logger.error('Failed to seed admin user', {
+        error: error.message,
+      });
+    });
+
     return db;
   } catch (error) {
     logger.error('Failed to initialize database', {

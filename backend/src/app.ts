@@ -18,6 +18,7 @@
 import express, { Express, Request, Response } from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
+import cookieParser from 'cookie-parser';
 import dotenv from 'dotenv';
 import path from 'path';
 
@@ -174,6 +175,13 @@ function createApp(): Express {
     extended: true,
     limit: process.env['MAX_REQUEST_SIZE'] || '10mb',
   }));
+
+  /*
+   * Parse cookies.
+   * Required for JWT tokens stored in HttpOnly cookies.
+   * Cookies are signed with SESSION_SECRET for integrity verification.
+   */
+  app.use(cookieParser(process.env['SESSION_SECRET'] || 'fallback-secret'));
 
   /*
    * ==========================================================================
