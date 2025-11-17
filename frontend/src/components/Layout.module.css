@@ -1,0 +1,81 @@
+/**
+ * Layout component styles.
+ * Grid-based layout for header + sidebar + content.
+ * Responsive adjustments for mobile and desktop.
+ */
+
+.layout {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background-color: var(--color-bg-primary);
+}
+
+/* Skip link for accessibility - hidden until focused */
+.skipLink {
+  position: absolute;
+  top: -100px;
+  left: 0;
+  background-color: var(--color-primary);
+  color: white;
+  padding: var(--space-sm) var(--space-md);
+  z-index: var(--z-toast);
+  transition: top var(--transition-fast);
+  font-weight: var(--font-weight-medium);
+  text-decoration: none;
+}
+
+.skipLink:focus {
+  top: 0;
+}
+
+.main {
+  flex: 1;
+  margin-top: var(--header-height);
+  padding: var(--space-lg);
+  overflow-y: auto;
+}
+
+/* Desktop: offset for sidebar */
+@media (min-width: 1024px) {
+  .main {
+    margin-left: var(--sidebar-width);
+  }
+}
+
+.content {
+  max-width: var(--content-max-width);
+  margin: 0 auto;
+  animation: fadeInUp var(--transition-normal) ease-out;
+}
+
+/* Remove outline when programmatically focused (skip link) */
+.main:focus {
+  outline: none;
+}
+
+/* Animation for page transitions */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .content {
+    animation: none;
+  }
+}
+
+/* Responsive padding */
+@media (max-width: 640px) {
+  .main {
+    padding: var(--space-md);
+  }
+}

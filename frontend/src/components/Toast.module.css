@@ -1,0 +1,128 @@
+/**
+ * Toast notification styles.
+ * Fixed position container with individual toast styling.
+ * Color-coded by severity for quick recognition.
+ */
+
+.container {
+  position: fixed;
+  top: var(--space-lg);
+  right: var(--space-lg);
+  z-index: var(--z-toast);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+  max-width: 400px;
+  width: calc(100% - 2 * var(--space-lg));
+  pointer-events: none;
+}
+
+.toast {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: var(--space-md);
+  border-radius: var(--radius-lg);
+  background-color: var(--color-bg-elevated);
+  border: 1px solid var(--color-border-light);
+  box-shadow: var(--shadow-lg);
+  animation: slideIn var(--transition-normal) ease-out;
+  pointer-events: auto;
+}
+
+/* Type variants */
+.success {
+  border-left: 4px solid var(--color-success);
+}
+
+.success .icon {
+  color: var(--color-success);
+}
+
+.error {
+  border-left: 4px solid var(--color-error);
+}
+
+.error .icon {
+  color: var(--color-error);
+}
+
+.warning {
+  border-left: 4px solid var(--color-warning);
+}
+
+.warning .icon {
+  color: var(--color-warning);
+}
+
+.info {
+  border-left: 4px solid var(--color-info);
+}
+
+.info .icon {
+  color: var(--color-info);
+}
+
+.icon {
+  flex-shrink: 0;
+}
+
+.message {
+  flex: 1;
+  font-size: var(--font-size-sm);
+  color: var(--color-text-primary);
+  line-height: 1.4;
+}
+
+.closeButton {
+  flex-shrink: 0;
+  padding: var(--space-xs);
+  color: var(--color-text-muted);
+  border-radius: var(--radius-sm);
+  transition:
+    color var(--transition-fast),
+    background-color var(--transition-fast);
+}
+
+.closeButton:hover {
+  color: var(--color-text-primary);
+  background-color: var(--color-bg-tertiary);
+}
+
+/* Animation */
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateX(100%);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* Responsive adjustments */
+@media (max-width: 640px) {
+  .container {
+    top: var(--space-md);
+    right: var(--space-md);
+    left: var(--space-md);
+    width: auto;
+  }
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .toast {
+    animation: fadeIn var(--transition-fast) ease-out;
+  }
+
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+}

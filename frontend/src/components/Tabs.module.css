@@ -1,0 +1,93 @@
+/**
+ * Tabs component styles.
+ * Horizontal tab navigation with active indicator.
+ * Accessible focus states.
+ */
+
+.container {
+  display: flex;
+  flex-direction: column;
+}
+
+.tablist {
+  display: flex;
+  gap: var(--space-xs);
+  border-bottom: 1px solid var(--color-border);
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.tablist::-webkit-scrollbar {
+  display: none;
+}
+
+.tab {
+  position: relative;
+  padding: var(--space-sm) var(--space-md);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text-secondary);
+  white-space: nowrap;
+  transition:
+    color var(--transition-fast),
+    background-color var(--transition-fast);
+}
+
+.tab:hover {
+  color: var(--color-text-primary);
+  background-color: var(--color-bg-tertiary);
+  border-radius: var(--radius-md) var(--radius-md) 0 0;
+}
+
+/* Active tab state */
+.tab.active {
+  color: var(--color-primary-light);
+}
+
+/* Active indicator line */
+.tab.active::after {
+  content: '';
+  position: absolute;
+  bottom: -1px;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background-color: var(--color-primary);
+  border-radius: var(--radius-full);
+}
+
+.panel {
+  padding: var(--space-lg) 0;
+  animation: fadeIn var(--transition-fast) ease-out;
+}
+
+.panel:focus {
+  outline: none;
+}
+
+.panel:focus-visible {
+  outline: 2px solid var(--color-border-focus);
+  outline-offset: 2px;
+  border-radius: var(--radius-md);
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* Responsive adjustments */
+@media (max-width: 640px) {
+  .tablist {
+    gap: 0;
+  }
+
+  .tab {
+    padding: var(--space-sm);
+    font-size: var(--font-size-xs);
+  }
+}

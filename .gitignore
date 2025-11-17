@@ -1,0 +1,254 @@
+# ============================================================================
+# OMEGAOPS ACADEMY - Global .gitignore
+# ============================================================================
+# This file prevents committing unnecessary/sensitive files to Git.
+# Key principles:
+# - Never commit node_modules, dist builds, or caches
+# - Never commit .env with secrets
+# - Never commit IDE files, OS files, or temp files
+# - Never commit logs or databases (when using SQLite)
+# ============================================================================
+
+# ============================================================================
+# NODE / NPM
+# ============================================================================
+node_modules/
+package-lock.json
+npm-debug.log
+npm-error.log
+yarn.lock
+yarn-error.log
+
+# Dependency caches
+.npm
+.pnpm-store/
+
+# ============================================================================
+# BUILD OUTPUTS
+# ============================================================================
+# Frontend (Vite)
+frontend/dist/
+frontend/build/
+frontend/.vite/
+
+# Backend (TypeScript)
+backend/dist/
+backend/build/
+backend/.tsbuildinfo
+
+# General
+dist/
+build/
+out/
+
+# ============================================================================
+# ENVIRONMENT & SECRETS
+# ============================================================================
+# Environment files with secrets (use .env.example instead)
+.env
+.env.local
+.env.*.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# API keys, tokens, credentials
+.env.secret
+secrets.json
+credentials.json
+private_key.pem
+
+# ============================================================================
+# DATABASE
+# ============================================================================
+# SQLite database files (use backup scripts instead)
+*.db
+*.sqlite
+*.sqlite3
+backend/data/
+
+# ============================================================================
+# IDE & EDITOR FILES
+# ============================================================================
+# VS Code
+.vscode/
+*.code-workspace
+
+# JetBrains IDEs
+.idea/
+.idea_modules/
+*.iml
+*.iws
+*.ipr
+
+# Sublime Text
+*.sublime-project
+*.sublime-workspace
+
+# Vim
+.vim/
+*.swp
+*.swo
+*~
+.netrwhist
+
+# Emacs
+*~
+\#*\#
+.\#*
+
+# VS
+.vs/
+.vscode/
+
+# ============================================================================
+# OPERATING SYSTEM FILES
+# ============================================================================
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+.Spotlight-V100
+.Trashes
+._*
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# Linux
+.directory
+.nfs*
+
+# ============================================================================
+# LOGS & TEMPORARY FILES
+# ============================================================================
+# General logs
+*.log
+*.logs/
+logs/
+
+# Docker logs
+docker-compose.log
+.docker/
+
+# Temporary files
+*.tmp
+*.temp
+tmp/
+temp/
+
+# PID files (from running processes)
+*.pid
+*.pid.lock
+
+# ============================================================================
+# TESTING & COVERAGE
+# ============================================================================
+coverage/
+.nyc_output/
+*.lcov
+.coverage
+.coverage.*
+
+# ============================================================================
+# DEVELOPMENT TOOLS
+# ============================================================================
+# Webpack
+dist/
+.webpack/
+
+# Parcel
+.parcel-cache/
+.cache/
+
+# Next.js
+.next/
+.out/
+
+# Gatsby
+public/
+.cache/
+
+# Husky (git hooks)
+.husky/_
+
+# ============================================================================
+# MISCELLANEOUS
+# ============================================================================
+# Backup files
+*.bak
+*.backup
+*.orig
+
+# macOS bundles
+*.app/
+*.bundle/
+
+# Certificates (if generated locally, not for production)
+*.pem
+*.key
+*.cert
+*.crt
+
+# Archives
+*.zip
+*.rar
+*.tar.gz
+*.tar.bz2
+
+# ============================================================================
+# MONOREPO / WORKSPACE SPECIFIC
+# ============================================================================
+# If using lerna or monorepo
+lerna-debug.log
+.lerna/
+
+# If using Yarn workspaces
+.yarn/
+
+# ============================================================================
+# VSCODE EXTENSIONS
+# ============================================================================
+.vscode/extensions.json
+
+# ============================================================================
+# DOCKER
+# ============================================================================
+# Build artifacts (if any)
+docker-buildx/
+
+# Compose overrides (local development variations)
+docker-compose.override.yml
+
+# ============================================================================
+# GIT SPECIFIC
+# ============================================================================
+# Git history / reflog
+.git/logs/reflog
+
+# Merge conflicts backup
+*.orig
+*.merging
+
+# ============================================================================
+# NOTES & DOCUMENTATION (OPTIONAL)
+# ============================================================================
+# Keep documentation in repo, but ignore local notes
+# Uncomment if you want to exclude:
+# notes/
+# TODO.md  (local TODO, not shared)
+
+# ============================================================================
+# EXCEPTION: IMPORTANT FILES TO KEEP
+# ============================================================================
+# Make sure we DO commit these:
+# !.gitkeep              # Preserve empty directories
+# !.env.example          # Template for environment variables
+# !package.json          # Dependencies manifest (ALWAYS commit)
+# !package-lock.json     # Lock file for reproducible installs (ALWAYS commit)
+# !tsconfig.json         # TypeScript config (ALWAYS commit)
+# !README.md             # Documentation (ALWAYS commit)
+# !.github/              # GitHub workflows, templates (ALWAYS commit)

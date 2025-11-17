@@ -1,0 +1,171 @@
+/**
+ * Sidebar component styles.
+ * Off-canvas on mobile, fixed on desktop.
+ * Smooth slide animation for mobile toggle.
+ */
+
+/* Backdrop for mobile overlay */
+.backdrop {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: calc(var(--z-fixed) + 1);
+}
+
+/* Show backdrop on mobile when sidebar is open */
+@media (max-width: 1023px) {
+  .backdrop {
+    display: block;
+    animation: fadeIn var(--transition-fast) ease-out;
+  }
+}
+
+.sidebar {
+  position: fixed;
+  top: var(--header-height);
+  left: 0;
+  bottom: 0;
+  width: var(--sidebar-width);
+  background-color: var(--color-bg-secondary);
+  border-right: 1px solid var(--color-border);
+  z-index: calc(var(--z-fixed) + 2);
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  transition: transform var(--transition-normal) ease-out;
+}
+
+/* Mobile: off-canvas by default */
+@media (max-width: 1023px) {
+  .sidebar {
+    top: 0;
+    transform: translateX(-100%);
+  }
+
+  .sidebar.open {
+    transform: translateX(0);
+  }
+}
+
+/* Desktop: always visible */
+@media (min-width: 1024px) {
+  .sidebar {
+    transform: none;
+  }
+}
+
+.closeButton {
+  position: absolute;
+  top: var(--space-md);
+  right: var(--space-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-xs);
+  color: var(--color-text-muted);
+  border-radius: var(--radius-sm);
+  transition:
+    color var(--transition-fast),
+    background-color var(--transition-fast);
+}
+
+.closeButton:hover {
+  color: var(--color-text-primary);
+  background-color: var(--color-bg-tertiary);
+}
+
+/* Hide close button on desktop */
+@media (min-width: 1024px) {
+  .closeButton {
+    display: none;
+  }
+}
+
+.nav {
+  flex: 1;
+  padding: var(--space-xl) var(--space-md);
+}
+
+.navList {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+}
+
+.navLink {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  padding: var(--space-sm) var(--space-md);
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text-secondary);
+  text-decoration: none;
+  border-radius: var(--radius-md);
+  transition:
+    color var(--transition-fast),
+    background-color var(--transition-fast);
+}
+
+.navLink:hover {
+  color: var(--color-text-primary);
+  background-color: var(--color-bg-tertiary);
+}
+
+/* Active link state */
+.navLink.active {
+  color: var(--color-primary-light);
+  background-color: rgba(59, 130, 246, 0.1);
+}
+
+.navLink.active::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 3px;
+  height: 24px;
+  background-color: var(--color-primary);
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+}
+
+/* Position fix for active indicator */
+.navList li {
+  position: relative;
+}
+
+.footer {
+  padding: var(--space-md);
+  border-top: 1px solid var(--color-border);
+}
+
+.version {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-muted);
+}
+
+/* Animation */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .sidebar {
+    transition: none;
+  }
+
+  .backdrop {
+    animation: none;
+  }
+}

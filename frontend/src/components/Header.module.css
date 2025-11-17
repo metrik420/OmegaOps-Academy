@@ -1,0 +1,184 @@
+/**
+ * Header component styles.
+ * Fixed top navigation with glassmorphism effect.
+ * Responsive layout with mobile menu toggle.
+ */
+
+.header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: var(--header-height);
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  padding: 0 var(--space-lg);
+  background-color: rgba(15, 21, 53, 0.8);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--color-border);
+  z-index: var(--z-fixed);
+}
+
+.menuButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-sm);
+  color: var(--color-text-secondary);
+  border-radius: var(--radius-md);
+  transition:
+    color var(--transition-fast),
+    background-color var(--transition-fast);
+}
+
+.menuButton:hover {
+  color: var(--color-text-primary);
+  background-color: var(--color-bg-tertiary);
+}
+
+/* Hide menu button on larger screens */
+@media (min-width: 1024px) {
+  .menuButton {
+    display: none;
+  }
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+}
+
+.logoText {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text-primary);
+  letter-spacing: -0.025em;
+}
+
+/* Hide logo text on small screens to save space */
+@media (max-width: 640px) {
+  .logoText {
+    font-size: var(--font-size-base);
+  }
+}
+
+.stats {
+  display: flex;
+  align-items: center;
+  gap: var(--space-lg);
+  margin-left: auto;
+}
+
+.statItem {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  padding: var(--space-xs) var(--space-sm);
+  background-color: var(--color-bg-tertiary);
+  border-radius: var(--radius-md);
+}
+
+.statValue {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+}
+
+.statLabel {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-muted);
+}
+
+/* Hide stat labels on mobile */
+@media (max-width: 768px) {
+  .statLabel {
+    display: none;
+  }
+}
+
+/* Hide less important stats on very small screens */
+@media (max-width: 480px) {
+  .statItem:first-child {
+    display: none;
+  }
+}
+
+.streakActive {
+  color: var(--color-streak);
+}
+
+.streakInactive {
+  color: var(--color-text-muted);
+}
+
+.levelIcon {
+  color: var(--color-level);
+}
+
+.xpContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 120px;
+}
+
+/* Hide XP container on small screens */
+@media (max-width: 640px) {
+  .xpContainer {
+    display: none;
+  }
+}
+
+.xpHeader {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+}
+
+.xpIcon {
+  color: var(--color-xp);
+}
+
+.xpValue {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+}
+
+.progressBar {
+  width: 100%;
+  height: 4px;
+  background-color: var(--color-bg-primary);
+  border-radius: var(--radius-full);
+  overflow: hidden;
+}
+
+.progressFill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--color-xp), var(--color-primary));
+  border-radius: var(--radius-full);
+  transition: width var(--transition-normal) ease-out;
+}
+
+.xpToNext {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-muted);
+}
+
+.themeButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-sm);
+  color: var(--color-text-secondary);
+  border-radius: var(--radius-md);
+  transition:
+    color var(--transition-fast),
+    background-color var(--transition-fast);
+}
+
+.themeButton:hover {
+  color: var(--color-text-primary);
+  background-color: var(--color-bg-tertiary);
+}

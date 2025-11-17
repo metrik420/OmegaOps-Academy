@@ -1,0 +1,79 @@
+{
+  "compilerOptions": {
+    /*
+     * STRICT MODE: Enable all strict type-checking options
+     * This catches type errors at compile time rather than runtime
+     * Critical for production code quality and maintainability
+     */
+    "strict": true,
+    "noImplicitAny": true,
+    "strictNullChecks": true,
+    "strictFunctionTypes": true,
+    "strictBindCallApply": true,
+    "strictPropertyInitialization": true,
+    "noImplicitThis": true,
+    "alwaysStrict": true,
+
+    /*
+     * Additional safety checks beyond strict mode
+     * These prevent common runtime errors
+     */
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noImplicitReturns": true,
+    "noFallthroughCasesInSwitch": true,
+    "noUncheckedIndexedAccess": true,
+    "exactOptionalPropertyTypes": true,
+
+    /*
+     * Module resolution for Node.js backend
+     * CommonJS for better compatibility with Node ecosystem
+     */
+    "target": "ES2022",
+    "module": "commonjs",
+    "lib": ["ES2022"],
+    "moduleResolution": "node",
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "resolveJsonModule": true,
+
+    /*
+     * Output configuration
+     * Separate dist/ directory keeps source clean
+     */
+    "outDir": "./dist",
+    "rootDir": "./src",
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true,
+
+    /*
+     * Performance and debugging
+     */
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "incremental": true,
+
+    /*
+     * Path aliases for cleaner imports
+     * @/ maps to src/ for absolute imports
+     */
+    "baseUrl": "./src",
+    "paths": {
+      "@/*": ["*"],
+      "@/types/*": ["types/*"],
+      "@/utils/*": ["utils/*"],
+      "@/services/*": ["services/*"],
+      "@/database/*": ["database/*"]
+    }
+  },
+  "include": [
+    "src/**/*"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist",
+    "**/*.test.ts",
+    "**/*.spec.ts"
+  ]
+}

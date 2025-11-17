@@ -1,0 +1,232 @@
+.loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 60vh;
+}
+
+.softwareDetail {
+  max-width: 1000px;
+  margin: 0 auto;
+}
+
+.backButton {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
+  padding: var(--space-sm) var(--space-md);
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+  background-color: var(--color-bg-secondary);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  margin-bottom: var(--space-lg);
+}
+
+.backButton:hover {
+  color: var(--color-text-primary);
+  background-color: var(--color-bg-tertiary);
+}
+
+.header {
+  margin-bottom: var(--space-xl);
+}
+
+.headerTop {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-sm);
+}
+
+.confidence {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  font-size: var(--font-size-sm);
+  color: var(--color-success);
+  text-transform: capitalize;
+}
+
+.title {
+  font-size: var(--font-size-4xl);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text-primary);
+  margin: 0 0 var(--space-md) 0;
+}
+
+.deprecationWarning {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: var(--space-md);
+  background-color: rgba(245, 158, 11, 0.1);
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  border-radius: var(--radius-md);
+  color: var(--color-warning);
+  margin-bottom: var(--space-md);
+}
+
+.environments {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-xs);
+  margin-bottom: var(--space-sm);
+}
+
+.lastVerified {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
+  margin: 0;
+}
+
+.tabContent {
+  background-color: var(--color-bg-secondary);
+  padding: var(--space-lg);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--color-border);
+}
+
+.tabContent h3 {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+  margin: 0 0 var(--space-md) 0;
+}
+
+.tabContent h3:not(:first-child) {
+  margin-top: var(--space-xl);
+}
+
+.tabContent p {
+  color: var(--color-text-secondary);
+  line-height: 1.6;
+}
+
+.tabContent ul,
+.tabContent ol {
+  color: var(--color-text-secondary);
+}
+
+.tabContent li {
+  margin-bottom: var(--space-sm);
+}
+
+.relatedTools {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-sm);
+}
+
+.installGuide {
+  margin-bottom: var(--space-xl);
+}
+
+.installGuide h3 {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+.verificationInfo {
+  font-size: var(--font-size-sm);
+  color: var(--color-success);
+  font-style: italic;
+}
+
+.installSteps {
+  counter-reset: step;
+  list-style: none;
+  padding: 0;
+}
+
+.installSteps li {
+  position: relative;
+  padding-left: var(--space-xl);
+  margin-bottom: var(--space-lg);
+}
+
+.installSteps li::before {
+  counter-increment: step;
+  content: counter(step);
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 24px;
+  height: 24px;
+  background-color: var(--color-primary);
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-bold);
+}
+
+.installSteps p {
+  margin-bottom: var(--space-sm);
+}
+
+.securityList {
+  list-style: none;
+  padding: 0;
+}
+
+.securityList li {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-sm);
+  padding: var(--space-sm);
+  background-color: var(--color-bg-tertiary);
+  border-radius: var(--radius-md);
+  margin-bottom: var(--space-sm);
+}
+
+.securityList svg {
+  color: var(--color-success);
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.sourcesList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+.sourceItem {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: var(--space-md);
+  background-color: var(--color-bg-tertiary);
+  border-radius: var(--radius-md);
+  text-decoration: none;
+  color: var(--color-primary-light);
+  transition: background-color var(--transition-fast);
+}
+
+.sourceItem:hover {
+  background-color: var(--color-bg-elevated);
+  text-decoration: none;
+}
+
+.sourceItem span:first-of-type {
+  flex: 1;
+}
+
+.accessedDate {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-muted);
+}
+
+@media (max-width: 640px) {
+  .title {
+    font-size: var(--font-size-3xl);
+  }
+
+  .tabContent {
+    padding: var(--space-md);
+  }
+}

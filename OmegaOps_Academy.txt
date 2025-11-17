@@ -1,0 +1,805 @@
+PROJECT_SPEC_FOR_CLAUDE_CODE – OMEGAOPS ACADEMY (FULL + UPDATED)
+
+Mission:
+Build the most advanced, self-updating, source-verified learning platform for Linux, web hosting, cPanel/WHM, security, and server software — including a “Software Galaxy” that grows far beyond 100 tools and becomes the world’s best, always-current guide to installing and configuring server software.
+
+Everything runs on an Ubuntu server in Docker, fronted by Nginx Proxy Manager. All code should be clean, production-ready, and heavily commented.
+
+0. Core Principles & Rules
+
+Multi-page web app (React + Vite) with a professional DevOps/hosting feel and gamified learning.
+
+Self-updating knowledge:
+
+Background workers pull from official + major/trusted sources only.
+
+The app regularly re-verifies that tutorials match current best practices.
+
+Verification & trust rules:
+
+Default rule: If a recommendation cannot be verified against multiple major sources, it must NOT be labeled as “best practice.”
+
+Prioritize:
+
+Official vendor docs: Canonical/Ubuntu, Red Hat/RHEL, Debian, cPanel, Nginx, Apache, MySQL/MariaDB, Docker, etc.
+
+Large, reputable providers: Google Cloud, Microsoft/Azure, AWS docs, etc.
+
+Security/standards bodies: OWASP, CIS, NIST summaries.
+
+When possible, aim for corroboration from at least 3–4 major sources. If fewer agree, mark confidenceLevel accordingly (medium or experimental).
+
+Human in the loop:
+
+Workers never silently rewrite core content.
+
+All changes become pending updates that require admin approval in the UI.
+
+Safety & anonymity:
+
+Use only example.com, mail.example.com, and RFC1918 IPs (10.x, 192.168.x, 172.16–31.x) in examples.
+
+Avoid destructive commands unless clearly labeled as dangerous.
+
+1. Tech Stack Overview
+Frontend
+
+React + Vite, TypeScript preferred.
+
+Routing with React Router (or similar).
+
+State management: React Query or Zustand (dev choice, but must be documented).
+
+Styling:
+
+CSS Modules or styled-components; no Tailwind is required.
+
+Dark theme by default with a light-mode toggle.
+
+Requirements:
+
+Fully responsive (small mobile → 4K+ desktop).
+
+Keyboard accessible.
+
+Smooth but subtle animations (no heavy performance cost).
+
+Backend
+
+Node.js + Express (or NestJS) in TypeScript.
+
+Expose REST API endpoints for:
+
+/api/roadmap – weekly overview.
+
+/api/missions + /api/missions/:id.
+
+/api/labs + /api/labs/:id.
+
+/api/knowledge.
+
+/api/software + /api/software/:id.
+
+/api/updates.
+
+/api/progress (optional, for persistent user profiles).
+
+Database:
+
+SQLite or Postgres (dev choice), with tables/collections for:
+
+topics, missions, labs
+
+software (Software Galaxy)
+
+sources
+
+pending_updates
+
+changelog
+
+(optional) users, progress
+
+Background Workers
+
+Implement as separate processes/containers:
+
+Knowledge Worker:
+
+Monitors upstream docs for core topics (Linux, SSH, web servers, PHP-FPM, DB, DNS, email, Docker, security, PCI patterns, cPanel/WHM).
+
+Fetches official docs + major vendor docs.
+
+Diffs content against previous versions.
+
+Proposes updates to missions, labs, and knowledge pages.
+
+SoftwareDiscoveryWorker (“Software Galaxy”):
+
+Discovers new server-related software from trusted catalogs (e.g., OS repos, official images, CNCF lists, etc.).
+
+Normalizes software metadata.
+
+Adds new SoftwareTool entries as status = "discovered".
+
+SoftwareDocWorker:
+
+For each SoftwareTool:
+
+Collects official docs + big vendor/cloud docs.
+
+Generates or updates InstallGuide and ConfigGuide content.
+
+Sets confidenceLevel and links back to sources.
+
+Writes all changes as pending updates for approval, not auto-live.
+
+All workers must be structured so they can run via cron or a scheduler (e.g., node worker.js) and log their activity clearly.
+
+2. Main Pages / Routes (Frontend)
+
+Implement as React routes:
+
+/ – Dashboard
+
+/roadmap – Weekly Roadmap
+
+/missions/:week/:day – Daily Mission View
+
+/labs – Scenario Labs Index
+
+/labs/:id – Single Lab
+
+/knowledge – Knowledge Base Index
+
+/knowledge/:topicId – Topic Detail Page
+
+/software – Software Galaxy Index
+
+/software/:id – Software Detail Page
+
+/updates – Upstream Change Log
+
+/admin – Admin Panel (moderation)
+
+(Optional) /logbook – Personal Learning Log
+
+Navigation layout:
+
+Left sidebar (or top nav) for main sections.
+
+Top bar showing:
+
+XP
+
+Level
+
+Daily streak
+
+Theme toggle
+
+3. Learning Design: Roadmap, Missions, and Daily/Weekly Practice
+3.1 Roadmap
+
+At least 12 weeks of content.
+
+Each week:
+
+5 daily missions (Mon–Fri).
+
+1 “boss” lab or larger scenario (Sat).
+
+Sunday optional review.
+
+Example week themes (must be implemented with at least a solid skeleton; Week 1–2 should be fully fleshed out with real content):
+
+Week 1 – Linux & CLI Foundations
+
+Week 2 – systemd, services, logs
+
+Week 3 – Web stack: Apache/Nginx & PHP-FPM
+
+Week 4 – Databases: MySQL/MariaDB/Postgres basics
+
+Week 5 – DNS & networking fundamentals
+
+Week 6 – Email stack: Exim/Postfix, Dovecot, deliverability
+
+Week 7 – Docker & containerized web stacks
+
+Week 8 – cPanel & WHM core hosting concepts
+
+Week 9 – Security, SSH hardening, PCI-style patterns
+
+Week 10 – WordPress/CMS troubleshooting
+
+Week 11 – Forensics & incident response
+
+Week 12 – Performance tuning & capacity planning (capstone)
+
+3.2 Mission Structure
+
+Each mission (Day) must include:
+
+Narrative intro
+
+Short story: “You’re on-call and X just broke…”
+
+Objectives – bullet list of skills.
+
+Warmup – 3–5 quick questions or recall checks.
+
+Main Tasks – step-by-step:
+
+Each step has:
+
+Title
+
+Explanation
+
+Optional commands (with safe examples)
+
+Expected outcome summary
+
+Optional caution/warning
+
+Quiz/Checkpoint – multiple choice + optional free-response.
+
+Reflection – text box: “What did you learn?”.
+
+Completion – button that awards XP and updates streak.
+
+3.3 Gamification
+
+XP per mission + bonus XP per lab.
+
+Leveling system (e.g., level every N XP).
+
+Streak tracking (days in a row with at least one mission completed).
+
+Badges:
+
+“Log Diver” – complete all log-related missions.
+
+“Docker Wrangler” – complete all Docker week missions.
+
+“Incident Responder” – complete all IR missions.
+
+“WHM Wizard” – complete all cPanel/WHM missions.
+
+Progress can be stored in localStorage at first; backend persistence is optional but ideal.
+
+4. cPanel & WHM Systems
+
+Include deep integration of cPanel/WHM concepts.
+
+4.1 cPanel/WHM Week(s)
+
+Example dedicated week (this week should be more fleshed out than just a skeleton):
+
+Week X – cPanel & WHM Core Hosting
+
+Day 1: Accounts & packages
+
+Creating accounts in WHM
+
+Homedir structure (/home/username/public_html)
+
+Basic ownership/permissions
+
+Day 2: DNS & userdata
+
+DNS zone basics (A, MX, CNAME from WHM)
+
+whmapi1 domainuserdata usage
+
+ssl userdata and how Apache vhosts map
+
+Day 3: Apache & EasyApache 4
+
+MPMs, PHP handlers, modules
+
+Where vhost configs live
+
+Understanding cPanel’s Apache layering
+
+Day 4: Email in cPanel
+
+Exim logs paths
+
+Dovecot basics
+
+Auth errors vs routing vs blocklists (high level)
+
+Day 5: MySQL/MariaDB management in WHM
+
+Database creation strategies
+
+Exposing phpMyAdmin
+
+Basic database best practices in a multi-tenant environment
+
+Boss Lab:
+
+“Wrong site loading on wrong domain” scenario:
+
+Diagnose using userdata, ssl userdata,
+Apache logs, and WHM interface.
+
+Each mission should reference:
+
+Relevant WHM/cPanel menu paths.
+
+CLI equivalents (whmapi1, log locations).
+
+cPanel official docs as primary sources.
+
+4.2 cPanel Labs
+
+Create labs that simulate real T4 situations, for example:
+
+Misrouted domains (userdata vs ssl userdata mismatches)
+
+High CPU due to one cPanel account
+
+Mail failures after server migration (rDNS, Exim, authentication)
+
+Each lab must use realistic log snippets (sanitized) and lead the learner through the actual troubleshooting mindset.
+
+5. Software Galaxy – Self-Updating Server Software Library
+
+Purpose: A self-growing “Software Galaxy” that starts with ~100 core tools and can expand endlessly into the most complete server software how-to library.
+
+5.1 SoftwareTool Model
+
+Use a TypeScript interface like:
+
+export interface SoftwareTool {
+  id: string;                        // e.g. "nginx", "haproxy"
+  name: string;                      // Display name
+  category: string;                  // "web-server", "database", "mail", "dns", "security", etc.
+  description: string;               // Short summary
+  useCases: string[];                // Typical scenarios
+
+  difficulty: "beginner" | "intermediate" | "advanced";
+  supportedEnvironments: string[];   // e.g. ["Ubuntu", "AlmaLinux", "Docker", "cPanel-integrated"]
+
+  installGuides: InstallGuide[];     // Per-environment install instructions
+  configGuides: ConfigGuide[];       // Secure/performance config patterns
+
+  status: "seeded" | "discovered" | "approved" | "deprecated";
+  relevanceScore: number;            // 0–100, based on popularity, ecosystem presence
+  firstSeenAt: string;               // ISO timestamp
+  lastUpdatedAt: string;             // ISO timestamp
+
+  sources: SourceRef[];              // Trusted docs used
+  lastVerifiedAt: string;            // Last verification timestamp
+  confidenceLevel: "high" | "medium" | "experimental";
+}
+
+
+Additional interfaces:
+
+export interface InstallGuide {
+  environment: "Ubuntu" | "AlmaLinux" | "Debian" | "Docker" | "cPanel/WHM" | "Other";
+  minVersion?: string;               // e.g. "Ubuntu 22.04+"
+  steps: InstallStep[];              // Step-by-step instructions
+}
+
+export interface InstallStep {
+  title: string;                     // "Add official repository"
+  description: string;               // Why we do this step
+  commands: MissionCommand[];        // Non-destructive by default. If destructive, mark clearly.
+}
+
+
+Reuse the same MissionCommand model from missions:
+
+export interface MissionCommand {
+  command: string;
+  explanation: string;
+  expectedOutputExample?: string;
+}
+
+
+Config guides:
+
+export interface ConfigGuide {
+  scenario: string;                  // "Secure baseline config", "High-performance static site"
+  description: string;
+  configSnippets: ConfigSnippet[];
+  tuningTips: string[];              // Bullet list of best practices
+}
+
+export interface ConfigSnippet {
+  path: string;                      // "/etc/nginx/nginx.conf"
+  language: string;                  // "nginx", "apache", "ini", "yaml", etc.
+  content: string;                   // The snippet itself
+  annotations: string[];             // Explanations of key lines/blocks
+}
+
+
+Source references:
+
+export interface SourceRef {
+  id: string;                        // internal id for the source
+  name: string;                      // "Canonical Ubuntu Server Guide"
+  url: string;                       // public URL
+  lastCheckedAt: string;             // ISO timestamp
+}
+
+5.2 Categories & Initial “Top 100”
+
+Include a curated initial list (~100) across:
+
+Web servers / proxies: Apache, Nginx, LiteSpeed/OpenLiteSpeed, Caddy, HAProxy, Traefik…
+
+Application runtimes: PHP-FPM, Node.js (PM2), Python app servers (uWSGI, Gunicorn), Ruby app servers (Puma)…
+
+Databases: MySQL, MariaDB, PostgreSQL, Redis, Memcached…
+
+Caching & acceleration: Varnish, Nginx cache, Redis-based caches…
+
+Mail stack: Exim, Postfix, Dovecot, SpamAssassin/Rspamd, DKIM tools…
+
+DNS: BIND, PowerDNS, Unbound…
+
+Monitoring/observability: Prometheus, Grafana, Loki, ELK/EFK, Netdata, etc.
+
+Security: Fail2ban, CSF, ModSecurity, Fail2ban filters, Let’s Encrypt/Certbot, VPN endpoints (OpenVPN/WireGuard)…
+
+Management tools: phpMyAdmin, Adminer, Portainer, Watchtower, etc.
+
+Create them as status: "seeded" with at least one environment’s guide partially implemented for a few key tools (e.g. Nginx, MySQL, Docker, Redis) as concrete examples.
+
+5.3 Discovery Engine
+
+SoftwareDiscoveryWorker should:
+
+Periodically fetch catalogs from trusted sources:
+
+Official OS package indexes (Ubuntu, Debian, RHEL/AlmaLinux).
+
+CNCF landscape or similar.
+
+Docker Hub “Official Images” lists (server/infrastructure-focused).
+
+Large curated lists from major platforms (no random blogs).
+
+Filter for server-related tools only:
+
+Web, DB, mail, DNS, cache, monitoring, security, control panels, infra tools, etc.
+
+Normalize tool names and metadata.
+
+For new tools:
+
+Create SoftwareTool with status = "discovered".
+
+Set relevanceScore based on:
+
+How many catalogs list it.
+
+Whether it’s an official image or recognized project.
+
+For existing tools:
+
+Update metadata and mark for re-verification.
+
+No discovered tool goes public until approved.
+
+5.4 Auto-Generated Guides & Verification
+
+SoftwareDocWorker should:
+
+For each SoftwareTool (seeded or discovered), pull relevant docs:
+
+Official project docs (primary).
+
+OS vendor docs (Ubuntu/Canonical, Red Hat, Debian).
+
+Major cloud docs (Google Cloud, Azure, AWS) where applicable.
+
+Use LLM + rules to generate:
+
+installGuides for each environment (Ubuntu, AlmaLinux, Docker, etc.).
+
+configGuides:
+
+Secure baseline
+
+Performance-focused configuration
+
+Apply verification rules:
+
+If multiple large, reputable sources agree on a pattern (e.g., recommended cipher list, systemd service pattern):
+
+Mark confidenceLevel = "high".
+
+If guidance is partially aligned, mark medium.
+
+If guidance looks speculative, mark experimental and either:
+
+Keep it for admin review.
+
+Or require more sources before publishing.
+
+All results become pending_updates and must be reviewed in the admin panel.
+
+5.5 /software UI
+
+Index page:
+
+Search bar.
+
+Filters:
+
+Category
+
+Environment
+
+Difficulty
+
+Status (default: approved only).
+
+Sorting:
+
+By relevanceScore (default).
+
+By lastUpdatedAt.
+
+By name.
+
+Detail page for each tool:
+
+Summary + use cases.
+
+Badges for environments supported.
+
+Tabs:
+
+Overview
+
+Install
+
+Config
+
+Security & Hardening
+
+Sources & Verification:
+
+Show sources[], lastVerifiedAt, confidenceLevel.
+
+Show warnings if status = "deprecated".
+
+6. Knowledge Base (/knowledge)
+
+Top-level topics:
+
+Linux & CLI
+
+systemd & services
+
+Logs & observability
+
+Web stack (Apache, Nginx, PHP-FPM)
+
+Databases
+
+DNS & networking
+
+Email & deliverability
+
+Docker & container orchestration
+
+Security & PCI-style hardening
+
+cPanel/WHM & multi-tenant hosting
+
+Forensics & incident response
+
+Each topic page:
+
+Short explanations.
+
+Commands with explanations.
+
+Mini-playbooks (e.g., “How to debug high load on a shared cPanel server”).
+
+Links to:
+
+Related missions
+
+Related labs
+
+Related software tools
+
+Each knowledge item should show its sources and lastVerifiedAt.
+
+7. Updates & Admin Approval (/updates, /admin)
+/updates
+
+Timeline of upstream changes:
+
+“Nginx docs updated cipher recommendations”
+
+“Ubuntu LTS default sshd_config changed”
+
+“OWASP Top 10 updated”
+
+Show:
+
+Affected missions, labs, software tools, or knowledge topics.
+
+Status: Pending, Applied, Ignored.
+
+/admin
+
+Protected route with simple auth.
+
+Sections:
+
+Pending content updates (missions, labs, knowledge).
+
+Software Galaxy:
+
+New discovered tools.
+
+Updated tools with suggested changes.
+
+Deprecation suggestions.
+
+For each update or new tool:
+
+Show a readable summary & comparison.
+
+Actions:
+
+Approve
+
+Edit & Approve
+
+Reject / Ignore
+
+8. Progress, Logbook & UX Enhancements
+
+Store progress & reflections.
+
+/logbook (or integrated into dashboard):
+
+List of completed missions, labs.
+
+Date, XP, reflection summary.
+
+Search by topic/tag.
+
+UX guidelines:
+
+All code blocks should be copyable with one click.
+
+Dangerous commands labeled clearly as “Danger Zone”.
+
+Sectioning and layout must make long content easy to scan.
+
+9. Docker & Nginx Proxy Manager Integration
+Dockerfile (concept)
+
+Multi-stage:
+
+Builder:
+
+Base: node:<LTS>-alpine.
+
+Copy package files, run npm ci.
+
+Copy source, run npm run build (Vite).
+
+Runtime:
+
+Base: nginx:alpine.
+
+Copy build output to /usr/share/nginx/html.
+
+Provide nginx.conf:
+
+Serves SPA.
+
+Handles try_files fallback to index.html.
+
+Expose port 80.
+
+All Dockerfile steps must be heavily commented, explaining what each stage and line does.
+
+docker-compose (concept)
+
+Service: omegaops-academy
+
+Container name: omegaops-academy
+
+Image: built from the Dockerfile
+
+Ports: expose only internal (e.g., 80), no direct host binding if using external network.
+
+Networks:
+
+Attach to an external web network (created to integrate with Nginx Proxy Manager).
+
+Restart policy: unless-stopped.
+
+Nginx Proxy Manager
+
+README must include steps:
+
+Build and run the container on Ubuntu.
+
+In Nginx Proxy Manager:
+
+Create a new Proxy Host.
+
+Set domain (e.g., academy.yourdomain.com).
+
+Point to the container (omegaops-academy) and port 80.
+
+Enable SSL via Let’s Encrypt.
+
+Force HTTPS.
+
+10. Code Quality & Comments
+
+All code (frontend, backend, workers, configs) must include:
+
+Detailed, professional-level inline comments explaining:
+
+Purpose of components/functions.
+
+Non-obvious logic.
+
+Security/performance implications.
+
+Provide a README.md explaining:
+
+Dev setup.
+
+Build process.
+
+How to run workers.
+
+How to deploy with Docker and NPM.
+
+At the top of the repo (README or a VISION.md), include this:
+
+“This project’s long-term goal is to become the most complete, source-verified ‘how to install and configure any server software’ academy and reference, continually updated from official and major vendor documentation with a human approval layer.”
+
+11. Deliverables Summary
+
+Frontend: React + Vite, multi-page SPA with all routes described.
+
+Backend: Node.js/TypeScript API with DB models for missions, labs, knowledge, software, sources, updates, etc.
+
+Workers: KnowledgeWorker, SoftwareDiscoveryWorker, SoftwareDocWorker.
+
+Curriculum:
+
+12-week roadmap skeleton.
+
+At least Week 1 & Week 2 fully detailed.
+
+At least one full cPanel/WHM week.
+
+Software Galaxy:
+
+Initial ~100 seeded tools.
+
+Discovery + documentation pipeline.
+
+Frontend UI for browsing tools.
+
+Admin UI:
+
+Pending updates & approvals.
+
+Software Galaxy moderation.
+
+Dockerfile + docker-compose for deployment on Ubuntu.
+
+README with dev & deployment instructions, including Nginx Proxy Manager integration.

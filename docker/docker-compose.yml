@@ -1,0 +1,133 @@
+# ============================================================================
+# OMEGAOPS ACADEMY - Docker Compose Configuration
+# ============================================================================
+# This file orchestrates the OmegaOps Academy container.
+#
+# For MVP:
+# - Frontend runs via Nginx (built into Dockerfile)
+# - Backend runs separately (npm start on host or separate service)
+# - Database is SQLite (file-based, persisted via volume)
+#
+# For Production:
+# - Backend could be a separate service in this file
+# - Redis/caching could be added
+# - Separate database container (PostgreSQL) could be added
+# ============================================================================
+
+version: '3.8'
+
+services:
+  # ========================================================================
+  # OMEGAOPS ACADEMY - React SPA + Nginx Reverse Proxy
+  # ========================================================================
+  omegaops-academy:
+    # Container name (used by Nginx Proxy Manager for routing)
+    container_name: omegaops-academy
+
+    # Build from our Dockerfile
+    build:
+      context: ..  # Project root (/home/metrik/docker/learn)
+      dockerfile: docker/Dockerfile  # Multi-stage build
+
+    # Image name and tag (for future reference)
+    image: omegaops-academy:latest
+
+    # Port mapping
+    # Container:80 (Nginx) is exposed to docker network
+    # If using Nginx Proxy Manager on same host:
+    #   - NPM container connects via external "web" network
+    #   - No need to expose to host directly
+    # If testing locally: ports: ["80:80"] or ["8080:80"]
+    # For now, we use external network for NPM integration
+    # ports:
+    #   - "80:80"  # Uncomment for local testing
+
+    # Network: Connect to external "web" network created by Nginx Proxy Manager
+    # This allows NPM container to reach omegaops-academy via hostname
+    networks:
+      - web
+
+    # Auto-restart policy
+    restart: unless-stopped
+
+    # Environment variables
+    environment:
+      # Node environment (for logging, error handling)
+      NODE_ENV: production
+
+    # Optional: Volume for logs (if you want to persist nginx logs)
+    # volumes:
+    #   - ./logs:/var/log/nginx  # Persist nginx access/error logs
+
+    # Health check (allows Docker to detect if service is ready)
+    # The Dockerfile includes a HEALTHCHECK, but this overrides it
+    # Uncomment if you want additional checks
+    # healthcheck:
+    #   test: ["CMD", "curl", "-f", "http://localhost/"]
+    #   interval: 30s
+    #   timeout: 10s
+    #   retries: 3
+    #   start_period: 10s
+
+    # Logging configuration (optional, for production)
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+# ============================================================================
+# NETWORKS
+# ============================================================================
+networks:
+  # External network created by Nginx Proxy Manager
+  # This allows NPM container (running on host) to discover omegaops-academy
+  # NPM config: Proxy Host → Forward to: omegaops-academy:80
+  web:
+    external: true
+    # If network doesn't exist, create it:
+    # docker network create web
+
+# ============================================================================
+# OPTIONAL FUTURE ADDITIONS
+# ============================================================================
+# These would expand the setup for production:
+#
+# omegaops-api:
+#   # Separate backend service
+#   build:
+#     context: ../backend
+#     dockerfile: Dockerfile  # Backend-only Dockerfile
+#   image: omegaops-api:latest
+#   container_name: omegaops-api
+#   ports:
+#     - "3001:3001"
+#   environment:
+#     NODE_ENV: production
+#     DB_TYPE: postgres
+#     DB_HOST: postgres
+#     DB_PORT: 5432
+#   depends_on:
+#     - postgres
+#   networks:
+#     - web
+#   restart: unless-stopped
+#
+# postgres:
+#   # Persistent database (replaces SQLite)
+#   image: postgres:15-alpine
+#   container_name: omegaops-db
+#   environment:
+#     POSTGRES_USER: omegaops
+#     POSTGRES_PASSWORD: ${DB_PASSWORD}  # From .env file
+#     POSTGRES_DB: omegaops
+#   volumes:
+#     - postgres_data:/var/lib/postgresql/data
+#   networks:
+#     - web
+#   restart: unless-stopped
+#
+# volumes:
+#   postgres_data:  # Named volume for database persistence
+#
+# ============================================================================

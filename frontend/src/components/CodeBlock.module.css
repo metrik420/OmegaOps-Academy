@@ -1,0 +1,146 @@
+/**
+ * CodeBlock component styles.
+ * Dark code theme matching application theme.
+ * Optimized for readability and usability.
+ */
+
+.container {
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  border: 1px solid var(--color-border);
+  margin: var(--space-md) 0;
+  background-color: var(--color-bg-secondary);
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-sm) var(--space-md);
+  background-color: var(--color-bg-tertiary);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.languageInfo {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  color: var(--color-text-secondary);
+}
+
+.filename {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text-primary);
+}
+
+.language {
+  font-size: var(--font-size-sm);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.copyButton {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
+  padding: var(--space-xs) var(--space-sm);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text-secondary);
+  background-color: var(--color-bg-secondary);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  transition:
+    background-color var(--transition-fast),
+    color var(--transition-fast),
+    border-color var(--transition-fast);
+}
+
+.copyButton:hover {
+  background-color: var(--color-bg-elevated);
+  color: var(--color-text-primary);
+  border-color: var(--color-border-light);
+}
+
+.copyButton:active {
+  transform: scale(0.98);
+}
+
+/* Success state when copied */
+.copyButton:has(span:contains('Copied')) {
+  color: var(--color-success);
+}
+
+.codeWrapper {
+  overflow: auto;
+  padding: var(--space-md);
+}
+
+.pre {
+  margin: 0;
+  padding: 0;
+  background: transparent;
+  border-radius: 0;
+}
+
+.code {
+  font-family: 'SF Mono', Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
+  font-size: var(--font-size-sm);
+  line-height: 1.7;
+  color: var(--color-text-primary);
+  background: transparent;
+  padding: 0;
+  white-space: pre;
+  word-wrap: normal;
+}
+
+/* Line display for line numbers mode */
+.line {
+  display: flex;
+  min-height: 1.7em;
+}
+
+.lineNumber {
+  flex-shrink: 0;
+  width: 3em;
+  text-align: right;
+  padding-right: var(--space-md);
+  color: var(--color-text-muted);
+  user-select: none;
+  font-size: var(--font-size-xs);
+  opacity: 0.6;
+}
+
+.lineContent {
+  flex: 1;
+  white-space: pre;
+}
+
+/* Screen reader only */
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
+/* Scrollbar styling for code area */
+.codeWrapper::-webkit-scrollbar {
+  height: 6px;
+  width: 6px;
+}
+
+.codeWrapper::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.codeWrapper::-webkit-scrollbar-thumb {
+  background: var(--color-border-light);
+  border-radius: var(--radius-full);
+}

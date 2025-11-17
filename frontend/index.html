@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <!-- SEO and Meta Tags -->
+    <title>OmegaOps Academy - DevOps Learning Platform</title>
+    <meta name="description" content="Interactive DevOps learning platform with missions, labs, and gamified progression" />
+    <meta name="theme-color" content="#0a0e27" />
+
+    <!-- Dark Theme by Default - Prevents flash of white on load -->
+    <meta name="color-scheme" content="dark light" />
+
+    <!-- Favicon placeholder -->
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+
+    <!-- Preconnect to API server for faster requests -->
+    <link rel="preconnect" href="http://localhost:3001" />
+
+    <!-- Critical CSS to prevent layout shift -->
+    <style>
+      /*
+       * Critical inline styles for initial render.
+       * Prevents flash of unstyled content (FOUC).
+       * Dark theme applied immediately.
+       */
+      :root {
+        --color-bg-primary: #0a0e27;
+        --color-text-primary: #e2e8f0;
+      }
+
+      html {
+        background-color: var(--color-bg-primary);
+        color: var(--color-text-primary);
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+      }
+
+      /* Loading state while JS loads */
+      #root {
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      /* Simple loading indicator */
+      .initial-loader {
+        width: 48px;
+        height: 48px;
+        border: 4px solid #1e293b;
+        border-top-color: #3b82f6;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+      }
+
+      @keyframes spin {
+        to { transform: rotate(360deg); }
+      }
+    </style>
+  </head>
+  <body>
+    <!--
+      React root element.
+      Loading indicator shown until React hydrates.
+      Accessible: aria-label for screen readers.
+    -->
+    <div id="root" aria-label="Loading OmegaOps Academy">
+      <div class="initial-loader" role="status" aria-label="Loading application"></div>
+    </div>
+
+    <!--
+      Vite entry point.
+      Type="module" for ES Module support.
+      Async loading for non-blocking.
+    -->
+    <script type="module" src="/src/main.tsx"></script>
+
+    <!--
+      No-JS fallback.
+      Accessibility: inform users if JavaScript is disabled.
+    -->
+    <noscript>
+      <div style="padding: 2rem; text-align: center;">
+        <h1>JavaScript Required</h1>
+        <p>OmegaOps Academy requires JavaScript to function. Please enable JavaScript in your browser settings.</p>
+      </div>
+    </noscript>
+  </body>
+</html>
