@@ -39,6 +39,7 @@ import updatesRouter from './api/routes/updates';
 import adminRouter from './api/routes/admin';
 import progressRouter from './api/routes/progress';
 import roadmapRouter from './api/routes/roadmap';
+import authRouter from './api/routes/auth';
 
 /**
  * Creates and configures the Express application.
@@ -244,6 +245,9 @@ function createApp(): Express {
   app.use('/api/software', softwareRouter);
   app.use('/api/updates', updatesRouter);
   app.use('/api/progress', progressRouter);
+
+  // Authentication routes (some protected, some public)
+  app.use('/api/auth', authRouter);
 
   // Admin routes (auth required via middleware in router)
   app.use('/api/admin', adminRouter);
