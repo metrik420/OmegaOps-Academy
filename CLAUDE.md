@@ -203,8 +203,14 @@ Frontend fetches latest via /api/updates
 - `pending_updates` – Queue of proposed changes (type: mission/lab/knowledge/software)
 - `changelog` – Timeline of applied updates with affected entities
 
+### User Authentication
+- `users` – User accounts with: id, email, username, password_hash (bcrypt), isEmailVerified, isAdmin, failedLoginAttempts, lockedUntil, acceptPrivacyPolicy, joinedAt, lastLoginAt
+- `refresh_tokens` – Active refresh tokens: id, userId, token, expiresAt, revokedAt, ipAddress, userAgent (token rotation & revocation)
+- `password_reset_tokens` – Password reset tokens: id, userId, token, expiresAt (1-hour single-use)
+- `auth_logs` – Audit trail: id, userId, action (login/logout/verify_email/reset_password), success, failureReason, ipAddress, userAgent, timestamp (90-day retention)
+- `admin_users` – Admin accounts: id, username, password_hash, isActive (currently only 'metrik' user)
+
 ### Optional: User Progress
-- `users` – User accounts with password hashes
 - `user_progress` – XP, level, streak, completed missions/labs
 - `user_reflections` – Daily reflection journal entries
 
@@ -285,10 +291,252 @@ Frontend fetches latest via /api/updates
 - `GET /api/admin/software/discovered` – Newly discovered tools
 - `POST /api/admin/software/:id/deprecate` – Mark tool obsolete
 
+### User Authentication Endpoints
+- `POST /api/auth/register` – User registration with email verification (201 Created)
+- `POST /api/auth/login` – Login with email/password, set httpOnly cookies (200 OK)
+- `POST /api/auth/admin/login` – Admin login (username='metrik' only, 200 OK)
+- `POST /api/auth/refresh` – Refresh access token using refresh token (200 OK)
+- `POST /api/auth/logout` – Logout current session, revoke refresh token (200 OK)
+- `POST /api/auth/logout-all` – Logout all sessions (revoke all refresh tokens, 200 OK)
+- `GET /api/auth/me` – Get current authenticated user info (200 OK)
+- `POST /api/auth/verify-email` – Verify email with token (200 OK)
+- `POST /api/auth/resend-verification` – Resend verification email (200 OK)
+- `POST /api/auth/forgot-password` – Request password reset email (200 OK)
+- `POST /api/auth/reset-password` – Reset password with token (200 OK)
+- `POST /api/auth/change-password` – Change password (authenticated, 200 OK)
+- `POST /api/auth/export-data` – GDPR data export (authenticated, 200 OK)
+- `DELETE /api/auth/account` – Delete account (authenticated, requires password, 200 OK)
+
 ### Optional: User Progress
 - `GET /api/progress` – User's XP, level, streak
 - `POST /api/progress/reflection` – Save reflection journal entry
 - `GET /api/logbook` – Learning history
+
+---
+
+## Authentication System
+
+### Overview
+The platform includes a production-grade user authentication system with JWT tokens, email verification, password reset, GDPR compliance, and account lockout protection.
+
+**Admin User:** Username: `metrik`, Email: `metrikcorp@gmail.com` (seed-generated)
+
+### Key Components
+
+**Backend Auth:**
+- `backend/src/services/AuthService.ts` (1,100+ lines) – Core auth logic: registration, login, token generation, password hashing (bcrypt cost 12), account lockout, GDPR export/deletion
+- `backend/src/services/EmailService.ts` (600+ lines) – Transactional email via Nodemailer with HTML/text templates for verification, password reset, welcome, login alerts
+- `backend/src/api/middleware/authMiddleware.ts` (550+ lines) – JWT verification, admin checks, rate limiting (5 login/15min, 3 reset/hour), CSRF protection
+- `backend/src/api/routes/auth.ts` (1,623 lines) – 14 RESTful endpoints wired to AuthService, comprehensive error handling, logging
+
+**Frontend Auth:**
+- `frontend/src/store/authStore.ts` (600+ lines) – Zustand state management with token persistence, auto-refresh (5-min checks), global 401/403 error handling
+- `frontend/src/contexts/AuthContext.tsx` (400+ lines) – React Context providing 12+ custom hooks: useAuth(), useLogin(), useRegister(), useForgotPassword(), useResetPassword(), useChangePassword(), useExportData(), useDeleteAccount(), useVerifyEmail(), useAdminLogin(), useLogout()
+- `frontend/src/components/auth/*` – Components for all auth flows: LoginForm, RegisterForm, ForgotPasswordForm, ResetPasswordForm, ChangePasswordForm, PasswordStrengthMeter, EmailVerificationPrompt, modals
+- `frontend/src/pages/auth/*` – Full pages for login, register, forgot-password, reset-password, verify-email, admin-login, dashboard, profile
+
+**Route Guards:**
+- `frontend/src/components/auth/ProtectedRoute.tsx` – Requires authentication, redirects to /login if not authenticated
+- `frontend/src/components/auth/AdminRoute.tsx` – Requires admin authentication (username === 'metrik'), redirects to /admin/login if not authenticated
+- `frontend/src/components/auth/OptionalAuth.tsx` – Public route with auth optional (shows extra features if authenticated)
+
+### Security Features
+
+1. **Password Security:**
+   - Bcrypt hashing (cost 12 ≈ 250ms per hash)
+   - Minimum 8 chars, uppercase, lowercase, number, special char required
+   - Passwords never logged or stored in plain text
+
+2. **JWT Tokens:**
+   - Access token: 15 minutes (short-lived)
+   - Refresh token: 7 days default, 30 days with rememberMe
+   - Tokens stored in httpOnly cookies (XSS protection)
+   - Token rotation on refresh (old token revoked)
+
+3. **Account Lockout:**
+   - 5 failed login attempts → 15-minute lockout
+   - Automatic unlock after timeout
+
+4. **Email Verification:**
+   - Required before sensitive operations
+   - 24-hour single-use tokens
+   - Resend capability with cooldown (60 seconds)
+
+5. **Password Reset:**
+   - 1-hour single-use reset tokens
+   - All refresh tokens revoked after reset (force re-login)
+   - User enumeration prevention (always return success, even if email not found)
+
+6. **CSRF Protection:**
+   - Double-submit cookie pattern
+   - X-CSRF-Token header validation
+
+7. **Rate Limiting:**
+   - Login: 5 attempts per 15 minutes per IP
+   - Password reset: 3 attempts per hour per IP
+   - API general: 100 requests per 15 minutes
+
+8. **Admin Security:**
+   - Separate admin login endpoint (/api/auth/admin/login)
+   - Username-only access (username must be 'metrik')
+   - Admin routes protected via AdminRoute component
+
+9. **GDPR Compliance:**
+   - /api/auth/export-data – Export all user data (account, login history, sessions)
+   - /api/auth/account DELETE – Permanently delete account and all associated data
+   - Privacy policy acceptance tracking (acceptPrivacyPolicy field)
+   - 90-day auth log retention policy (can be configured)
+
+### Authentication Flow
+
+**Registration:**
+```
+User → /api/auth/register (email, username, password)
+  ↓ Validate (Zod schema)
+  ↓ Hash password (bcrypt)
+  ↓ Create user, generate verification token
+  ↓ Send verification email (async, non-blocking)
+  ↓ Return user + tokens (201 Created)
+  ↓ Frontend: redirect to /verify-email prompt
+```
+
+**Login:**
+```
+User → /api/auth/login (email, password, rememberMe?)
+  ↓ Validate input
+  ↓ Find user by email
+  ↓ Verify password (bcrypt comparison)
+  ↓ Check account status (locked, etc.)
+  ↓ Generate tokens (access + refresh)
+  ↓ Set httpOnly cookies
+  ↓ Update last_login timestamp
+  ↓ Return user + tokens (200 OK)
+  ↓ Frontend: redirect to /dashboard
+```
+
+**Token Refresh:**
+```
+Frontend (5-min auto-refresh) → /api/auth/refresh
+  ↓ Verify refresh token signature
+  ↓ Check if token revoked
+  ↓ Generate new tokens (rotation)
+  ↓ Revoke old refresh token
+  ↓ Return new tokens (200 OK)
+  ↓ Update httpOnly cookies
+```
+
+**Email Verification:**
+```
+User clicks verify link in email → /verify-email/:token
+  ↓ Frontend extracts token from URL
+  ↓ POST /api/auth/verify-email (token)
+  ↓ Backend verifies token is valid, not expired
+  ↓ Mark user.isEmailVerified = true
+  ↓ Return success (200 OK)
+  ↓ Frontend: redirect to /login with success message
+```
+
+**Password Reset:**
+```
+User → /forgot-password → POST /api/auth/forgot-password (email)
+  ↓ Backend: prevent user enumeration (always return success)
+  ↓ Generate 1-hour reset token (if user found)
+  ↓ Send reset email with token link (async)
+  ↓ Return success message (200 OK)
+User clicks reset link in email → /reset-password/:token
+  ↓ POST /api/auth/reset-password (token, newPassword, confirmPassword)
+  ↓ Verify token, hash new password
+  ↓ Revoke ALL refresh tokens (force re-login)
+  ↓ Return success (200 OK)
+  ↓ Frontend: redirect to /login
+```
+
+### Testing Authentication
+
+**Unit Tests for AuthService:**
+```bash
+cd backend
+npm run test -- AuthService.test.ts
+```
+
+**Integration Tests for Auth Routes:**
+```bash
+cd backend
+npm run test -- auth.integration.test.ts
+```
+
+**Manual Testing (Frontend):**
+```bash
+# In one terminal, start backend
+cd backend
+npm run dev
+
+# In another terminal, start frontend
+cd frontend
+npm run dev
+
+# Visit http://localhost:5173/register
+# Fill form, verify email, login, change password, logout
+```
+
+**Test Admin Login:**
+- Username: `metrik`
+- Password: `Cooldog420`
+- Navigate to /admin/login or /admin after setup
+
+### Configuration
+
+**Backend .env for Auth:**
+```env
+# JWT
+JWT_SECRET=<generate-random-32-byte-string>
+JWT_EXPIRY_MINUTES=15
+REFRESH_TOKEN_EXPIRY_DAYS=7
+
+# Email (Nodemailer SMTP)
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_USER=your-email@gmail.com
+SMTP_PASS=your-app-password
+EMAIL_FROM=noreply@yourdomain.com
+
+# Admin
+ADMIN_USERNAME=metrik
+ADMIN_PASSWORD_HASH=<bcrypt-hashed-password>
+
+# Security
+ACCOUNT_LOCKOUT_THRESHOLD=5
+ACCOUNT_LOCKOUT_DURATION_MS=900000  # 15 minutes
+PASSWORD_RESET_TOKEN_EXPIRY_HOURS=1
+EMAIL_VERIFICATION_TOKEN_EXPIRY_HOURS=24
+
+# GDPR
+AUTH_LOG_RETENTION_DAYS=90
+```
+
+**Frontend .env for Auth:**
+```env
+VITE_API_URL=http://localhost:3000
+VITE_AUTH_COOKIE_SECURE=false  # Set to true in production
+VITE_TOKEN_REFRESH_INTERVAL_MS=300000  # 5 minutes
+```
+
+### Known Issues & Fixes
+
+**TypeScript Build Errors (Nov 2025):**
+- Frontend auth components needed proper type annotations for state setters
+- Backend auth.ts needs AuthService method signature verification
+- All Zod schemas must be properly exported from auth.types.ts
+- Fixed: Added default exports to all auth pages, fixed import statements
+
+### Documentation References
+
+- `frontend/FRONTEND_AUTH_IMPLEMENTATION.md` – Complete frontend auth architecture and integration
+- `frontend/AUTH_FLOW_DIAGRAM.md` – Visual ASCII diagrams for all auth flows
+- `frontend/AUTH_QUICK_START.md` – 5-minute quick start guide
+- `frontend/INTEGRATION_CHECKLIST.md` – Step-by-step integration instructions
+- `frontend/IMPLEMENTATION_SUMMARY.md` – Security audit, performance, compliance
+- `backend/AUTH_IMPLEMENTATION.md` – Complete backend auth documentation (if created)
 
 ---
 
