@@ -44,14 +44,14 @@ const registerSchema = z
       .min(8, 'Password must be at least 8 characters')
       .regex(PASSWORD_REGEX, 'Password does not meet requirements'),
     confirmPassword: z.string().min(1, 'Please confirm your password'),
-    acceptTerms: z.boolean().refine((val) => val === true, {
+    acceptTerms: z.boolean().refine((val: boolean) => val === true, {
       message: 'You must accept the Terms of Service',
     }),
-    acceptPrivacyPolicy: z.boolean().refine((val) => val === true, {
+    acceptPrivacyPolicy: z.boolean().refine((val: boolean) => val === true, {
       message: 'You must accept the Privacy Policy',
     }),
   })
-  .refine((data) => data.password === data.confirmPassword, {
+  .refine((data: { password: string; confirmPassword: string }) => data.password === data.confirmPassword, {
     message: 'Passwords do not match',
     path: ['confirmPassword'],
   });
@@ -108,10 +108,10 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess, showLinks
     const { name, value, type, checked } = e.target;
     const newValue = type === 'checkbox' ? checked : value;
 
-    setFormData((prev) => ({ ...prev, [name]: newValue }));
+    setFormData((prev: RegisterFormData) => ({ ...prev, [name]: newValue }));
 
     // Clear validation error for this field
-    setValidationErrors((prev) => ({ ...prev, [name]: undefined }));
+    setValidationErrors((prev: Partial<Record<keyof RegisterFormData, string>>) => ({ ...prev, [name]: undefined }));
   };
 
   /**
@@ -122,12 +122,12 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess, showLinks
       registerSchema.parse(formData);
       setValidationErrors({});
       return true;
-    } catch (err) {
+    } catch (err: unknown) {
       if (err instanceof z.ZodError) {
         const errors: Partial<Record<keyof RegisterFormData, string>> = {};
-        err.errors.forEach((error) => {
-          if (error.path[0]) {
-            errors[error.path[0] as keyof RegisterFormData] = error.message;
+        err.issues.forEach((issue: z.ZodIssue) => {
+          if (issue.path[0]) {
+            errors[issue.path[0] as keyof RegisterFormData] = issue.message;
           }
         });
         setValidationErrors(errors);

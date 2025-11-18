@@ -19,7 +19,7 @@ const resetPasswordSchema = z
     newPassword: z.string().min(8).regex(PASSWORD_REGEX, 'Password does not meet requirements'),
     confirmPassword: z.string().min(1, 'Please confirm your password'),
   })
-  .refine((data) => data.newPassword === data.confirmPassword, {
+  .refine((data: { newPassword: string; confirmPassword: string }) => data.newPassword === data.confirmPassword, {
     message: 'Passwords do not match',
     path: ['confirmPassword'],
   });
@@ -44,8 +44,8 @@ export const ResetPasswordForm: React.FC<ResetPasswordFormProps> = ({ token, onS
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
-    setValidationErrors((prev) => ({ ...prev, [name]: undefined }));
+    setFormData((prev: ResetPasswordFormData) => ({ ...prev, [name]: value }));
+    setValidationErrors((prev: Partial<Record<keyof ResetPasswordFormData, string>>) => ({ ...prev, [name]: undefined }));
   };
 
   const validateForm = (): boolean => {
@@ -53,12 +53,12 @@ export const ResetPasswordForm: React.FC<ResetPasswordFormProps> = ({ token, onS
       resetPasswordSchema.parse(formData);
       setValidationErrors({});
       return true;
-    } catch (err) {
+    } catch (err: unknown) {
       if (err instanceof z.ZodError) {
         const errors: Partial<Record<keyof ResetPasswordFormData, string>> = {};
-        err.errors.forEach((error) => {
-          if (error.path[0]) {
-            errors[error.path[0] as keyof ResetPasswordFormData] = error.message;
+        err.issues.forEach((issue: z.ZodIssue) => {
+          if (issue.path[0]) {
+            errors[issue.path[0] as keyof ResetPasswordFormData] = issue.message;
           }
         });
         setValidationErrors(errors);

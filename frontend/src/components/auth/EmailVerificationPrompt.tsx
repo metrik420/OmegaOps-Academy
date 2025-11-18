@@ -15,7 +15,7 @@ import styles from './EmailVerificationPrompt.module.css';
 
 const RESEND_COOLDOWN = 60; // 60 seconds
 
-export const EmailVerificationPrompt: React.FC = () => {
+export const EmailVerificationPrompt: React.FC = (): React.ReactNode => {
   const { user } = useAuth();
   const { execute: resendVerification, isLoading, isSuccess } = useResendVerification();
 
@@ -36,6 +36,7 @@ export const EmailVerificationPrompt: React.FC = () => {
       const timer = setTimeout(() => setCooldown(cooldown - 1), 1000);
       return () => clearTimeout(timer);
     }
+    return undefined;
   }, [cooldown]);
 
   // Auto-dismiss after successful resend

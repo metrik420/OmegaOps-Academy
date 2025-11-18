@@ -31,8 +31,8 @@ export const AdminLoginPage: React.FC = () => {
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
-    setValidationErrors((prev) => ({ ...prev, [name]: undefined }));
+    setFormData((prev: AdminLoginFormData) => ({ ...prev, [name]: value }));
+    setValidationErrors((prev: Partial<Record<keyof AdminLoginFormData, string>>) => ({ ...prev, [name]: undefined }));
   };
 
   const validateForm = (): boolean => {
@@ -40,12 +40,12 @@ export const AdminLoginPage: React.FC = () => {
       adminLoginSchema.parse(formData);
       setValidationErrors({});
       return true;
-    } catch (err) {
+    } catch (err: unknown) {
       if (err instanceof z.ZodError) {
         const errors: Partial<Record<keyof AdminLoginFormData, string>> = {};
-        err.errors.forEach((error) => {
-          if (error.path[0]) {
-            errors[error.path[0] as keyof AdminLoginFormData] = error.message;
+        err.issues.forEach((issue: z.ZodIssue) => {
+          if (issue.path[0]) {
+            errors[issue.path[0] as keyof AdminLoginFormData] = issue.message;
           }
         });
         setValidationErrors(errors);
@@ -141,3 +141,5 @@ export const AdminLoginPage: React.FC = () => {
     </div>
   );
 };
+
+export default AdminLoginPage;

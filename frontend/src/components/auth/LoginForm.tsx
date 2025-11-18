@@ -80,10 +80,10 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSuccess, showLinks = tru
     const { name, value, type, checked } = e.target;
     const newValue = type === 'checkbox' ? checked : value;
 
-    setFormData((prev) => ({ ...prev, [name]: newValue }));
+    setFormData((prev: LoginFormData) => ({ ...prev, [name]: newValue }));
 
     // Clear validation error for this field
-    setValidationErrors((prev) => ({ ...prev, [name]: undefined }));
+    setValidationErrors((prev: Partial<Record<keyof LoginFormData, string>>) => ({ ...prev, [name]: undefined }));
   };
 
   /**
@@ -96,12 +96,12 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSuccess, showLinks = tru
       loginSchema.parse(formData);
       setValidationErrors({});
       return true;
-    } catch (err) {
+    } catch (err: unknown) {
       if (err instanceof z.ZodError) {
         const errors: Partial<Record<keyof LoginFormData, string>> = {};
-        err.errors.forEach((error) => {
-          if (error.path[0]) {
-            errors[error.path[0] as keyof LoginFormData] = error.message;
+        err.issues.forEach((issue: z.ZodIssue) => {
+          if (issue.path[0]) {
+            errors[issue.path[0] as keyof LoginFormData] = issue.message;
           }
         });
         setValidationErrors(errors);

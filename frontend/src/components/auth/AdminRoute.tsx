@@ -77,3 +77,5 @@ export const AdminRoute: React.FC<AdminRouteProps> = ({ children }) => {
   // User is authenticated AND admin; render protected content
   return <>{children}</>;
 };
+
+export default AdminRoute;

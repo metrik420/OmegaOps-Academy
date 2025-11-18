@@ -39,8 +39,8 @@ export const ForgotPasswordForm: React.FC<ForgotPasswordFormProps> = ({ onSucces
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
-    setValidationErrors((prev) => ({ ...prev, [name]: undefined }));
+    setFormData((prev: ForgotPasswordFormData) => ({ ...prev, [name]: value }));
+    setValidationErrors((prev: Partial<Record<keyof ForgotPasswordFormData, string>>) => ({ ...prev, [name]: undefined }));
   };
 
   const validateForm = (): boolean => {
@@ -48,12 +48,12 @@ export const ForgotPasswordForm: React.FC<ForgotPasswordFormProps> = ({ onSucces
       forgotPasswordSchema.parse(formData);
       setValidationErrors({});
       return true;
-    } catch (err) {
+    } catch (err: unknown) {
       if (err instanceof z.ZodError) {
         const errors: Partial<Record<keyof ForgotPasswordFormData, string>> = {};
-        err.errors.forEach((error) => {
-          if (error.path[0]) {
-            errors[error.path[0] as keyof ForgotPasswordFormData] = error.message;
+        err.issues.forEach((issue: z.ZodIssue) => {
+          if (issue.path[0]) {
+            errors[issue.path[0] as keyof ForgotPasswordFormData] = issue.message;
           }
         });
         setValidationErrors(errors);

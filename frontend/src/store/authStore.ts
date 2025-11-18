@@ -188,9 +188,11 @@ async function fetchAPI(
   options: RequestInit = {},
   tokens?: { accessToken?: string | null; csrfToken?: string | null }
 ): Promise<Response> {
-  const headers: HeadersInit = {
+  // WHY: Use Record<string, string> to allow custom headers like 'X-CSRF-Token'
+  // TypeScript's HeadersInit doesn't directly accept arbitrary header names
+  const headers: Record<string, string> = {
     'Content-Type': 'application/json',
-    ...options.headers,
+    ...(options.headers as Record<string, string>),
   };
 
   // Add Authorization header if access token provided
@@ -223,11 +225,13 @@ async function fetchAPI(
 /**
  * Checks if access token is about to expire and triggers refresh if needed.
  * @param expiresAt - ISO 8601 timestamp of token expiration
- * @param refreshToken - Refresh token to use for renewal
- * @returns True if token was refreshed, false otherwise
+ * @returns True if token needs refresh, false otherwise
  * WHY: Proactive token refresh prevents mid-session authentication failures.
+ * NOTE: Reserved for future use with expiry-based refresh logic.
+ *       Currently, auto-refresh happens on fixed interval (TOKEN_REFRESH_INTERVAL).
+ *       Backend should return expiresAt in AuthResponse for this to be used.
  */
-function shouldRefreshToken(expiresAt: string | null): boolean {
+export function shouldRefreshToken(expiresAt: string | null): boolean {
   if (!expiresAt) return false;
 
   const expiryTime = new Date(expiresAt).getTime();
@@ -245,7 +249,7 @@ function shouldRefreshToken(expiresAt: string | null): boolean {
  * WHY: Backend may return technical errors; we show user-friendly messages instead.
  * SECURITY: Never expose stack traces or sensitive backend details.
  */
-async function extractErrorMessage(error: any): Promise<string> {
+async function extractErrorMessage(error: unknown): Promise<string> {
   // If error is a Response object, try to parse JSON
   if (error instanceof Response) {
     try {

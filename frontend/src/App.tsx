@@ -13,7 +13,7 @@
  */
 
 import { useEffect } from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Outlet } from 'react-router-dom';
 import { useStore } from '@/store';
 import Layout from '@/components/Layout';
 
@@ -33,19 +33,18 @@ import Logbook from '@/pages/Logbook';
 import NotFound from '@/pages/NotFound';
 
 // Auth page imports
-import LoginPage from '@/pages/auth/LoginPage';
-import RegisterPage from '@/pages/auth/RegisterPage';
-import ForgotPasswordPage from '@/pages/auth/ForgotPasswordPage';
-import ResetPasswordPage from '@/pages/auth/ResetPasswordPage';
-import VerifyEmailPage from '@/pages/auth/VerifyEmailPage';
-import AdminLoginPage from '@/pages/auth/AdminLoginPage';
-import DashboardPage from '@/pages/DashboardPage';
-import ProfilePage from '@/pages/ProfilePage';
+import { LoginPage } from '@/pages/auth/LoginPage';
+import { RegisterPage } from '@/pages/auth/RegisterPage';
+import { ForgotPasswordPage } from '@/pages/auth/ForgotPasswordPage';
+import { ResetPasswordPage } from '@/pages/auth/ResetPasswordPage';
+import { VerifyEmailPage } from '@/pages/auth/VerifyEmailPage';
+import { AdminLoginPage } from '@/pages/auth/AdminLoginPage';
+import { DashboardPage } from '@/pages/DashboardPage';
+import { ProfilePage } from '@/pages/ProfilePage';
 
 // Route guard components
-import ProtectedRoute from '@/components/auth/ProtectedRoute';
-import AdminRoute from '@/components/auth/AdminRoute';
-import OptionalAuth from '@/components/auth/OptionalAuth';
+import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
+import { AdminRoute } from '@/components/auth/AdminRoute';
 
 /**
  * Main App component.
@@ -104,7 +103,7 @@ function App() {
         {/* APPLICATION ROUTES (With Layout) */}
         {/* ============================= */}
 
-        <Route element={<Layout />}>
+        <Route element={<Layout><Outlet /></Layout>}>
           {/* Public routes - accessible to all users */}
           <Route path="/" element={<Dashboard />} />
           <Route path="/roadmap" element={<Roadmap />} />

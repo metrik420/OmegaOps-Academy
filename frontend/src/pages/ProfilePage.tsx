@@ -6,7 +6,7 @@
 
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth, useLogout, useExportData, useDeleteAccount } from '../contexts/AuthContext';
+import { useAuth, useLogout, useExportData } from '../contexts/AuthContext';
 import { ChangePasswordForm } from '../components/auth/ChangePasswordForm';
 import { ConfirmDeleteAccountModal } from '../components/modals/ConfirmDeleteAccountModal';
 import { LogoutConfirmModal } from '../components/modals/LogoutConfirmModal';
@@ -156,3 +156,5 @@ export const ProfilePage: React.FC = () => {
     </div>
   );
 };
+
+export default ProfilePage;

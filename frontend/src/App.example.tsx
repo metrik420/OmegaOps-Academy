@@ -4,7 +4,6 @@
  * USAGE: Copy this to App.tsx and customize as needed.
  */
 
-import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth } from './contexts/AuthContext';
 
