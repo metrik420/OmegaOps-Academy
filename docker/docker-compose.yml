@@ -32,20 +32,10 @@ services:
     # Image name and tag (for future reference)
     image: omegaops-academy:latest
 
-    # Port mapping
-    # Container:80 (Nginx) is exposed to docker network
-    # If using Nginx Proxy Manager on same host:
-    #   - NPM container connects via external "web" network
-    #   - No need to expose to host directly
-    # If testing locally: ports: ["80:80"] or ["8080:80"]
-    # For now, we use external network for NPM integration
-    # ports:
-    #   - "80:80"  # Uncomment for local testing
-
-    # Network: Connect to external "web" network created by Nginx Proxy Manager
-    # This allows NPM container to reach omegaops-academy via hostname
-    networks:
-      - web
+    # Network mode: Use host network for direct backend access
+    # This allows container to access backend on localhost:3001 without routing issues
+    # Note: In host mode, container shares host's network stack
+    network_mode: "host"
 
     # Auto-restart policy
     restart: unless-stopped

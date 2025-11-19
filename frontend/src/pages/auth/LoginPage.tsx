@@ -13,7 +13,7 @@ export const LoginPage: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const from = (location.state as any)?.from || '/dashboard';
+  const from = (location.state as { from?: string })?.from || '/dashboard';
 
   const handleSuccess = () => {
     navigate(from, { replace: true });

@@ -33,7 +33,7 @@ export const ProfilePage: React.FC = () => {
   const handleExportData = async () => {
     try {
       await exportData();
-    } catch (err) {
+    } catch {
       // Error handled by hook
     }
   };
