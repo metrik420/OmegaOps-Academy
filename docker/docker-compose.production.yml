@@ -1,0 +1,183 @@
+# ============================================================================
+# OMEGAOPS ACADEMY - Production Docker Compose Configuration
+# ============================================================================
+# This orchestrates the OmegaOps Academy production deployment.
+#
+# SERVICES:
+# - omegaops-academy: Frontend (Nginx) + Backend (Node.js) in single container
+# - Volume: Persistent SQLite database
+# - Volume: Application logs
+# - Network: External "web" network for Nginx Proxy Manager integration
+#
+# DEPLOYMENT:
+# 1. Build image: docker-compose -f docker-compose.production.yml build
+# 2. Start services: docker-compose -f docker-compose.production.yml up -d
+# 3. View logs: docker-compose -f docker-compose.production.yml logs -f
+# 4. Stop services: docker-compose -f docker-compose.production.yml down
+# ============================================================================
+
+version: '3.8'
+
+services:
+  # ==========================================================================
+  # OMEGAOPS ACADEMY - React SPA + Express API + Nginx
+  # ==========================================================================
+  omegaops-academy:
+    # Container name (used by Nginx Proxy Manager for routing)
+    container_name: omegaops-academy
+    hostname: omegaops-academy
+
+    # Build from production Dockerfile
+    build:
+      context: ..  # Project root (/home/metrik/docker/learn)
+      dockerfile: docker/Dockerfile.production
+
+    # Image name and tag
+    image: omegaops-academy:latest
+
+    # Restart policy
+    restart: unless-stopped
+
+    # Environment variables (override defaults in .env)
+    environment:
+      # Server configuration
+      NODE_ENV: production
+      PORT: 3001
+      API_BASE_URL: http://localhost:3001
+      FRONTEND_URL: ${FRONTEND_URL:-https://learn.metrikcorp.com}
+
+      # Database (SQLite on persistent volume)
+      DATABASE_PATH: /app/data/omegaops.db
+      DATABASE_WAL_MODE: "true"
+
+      # Authentication (from .env or secrets)
+      JWT_SECRET: ${JWT_SECRET}
+      SESSION_SECRET: ${SESSION_SECRET}
+      JWT_EXPIRATION: 15m
+      REFRESH_TOKEN_EXPIRATION: 7d
+      RESET_TOKEN_EXPIRATION: 1h
+      VERIFICATION_TOKEN_EXPIRATION: 24h
+
+      # Account security
+      MAX_FAILED_LOGIN_ATTEMPTS: 5
+      LOCKOUT_DURATION_MINUTES: 15
+      BCRYPT_ROUNDS: 12
+
+      # Admin credentials
+      ADMIN_USERNAME: ${ADMIN_USERNAME:-metrik}
+      ADMIN_EMAIL: ${ADMIN_EMAIL:-metrikcorp@gmail.com}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-Cooldog420}
+
+      # Email service (SMTP)
+      EMAIL_HOST: ${EMAIL_HOST:-localhost}
+      EMAIL_PORT: ${EMAIL_PORT:-587}
+      EMAIL_USER: ${EMAIL_USER}
+      EMAIL_PASSWORD: ${EMAIL_PASSWORD}
+      EMAIL_FROM: ${EMAIL_FROM:-noreply@learn.metrikcorp.com}
+      EMAIL_FROM_NAME: "OmegaOps Academy"
+
+      # Rate limiting
+      RATE_LIMIT_AUTH_MAX: 5
+      RATE_LIMIT_AUTH_WINDOW: 15
+      RATE_LIMIT_RESET_MAX: 3
+      RATE_LIMIT_RESET_WINDOW: 60
+      RATE_LIMIT_API_MAX: 100
+      RATE_LIMIT_API_WINDOW: 15
+
+      # CORS
+      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-http://localhost:3000,http://localhost:5173,https://learn.metrikcorp.com}
+      CORS_ALLOW_CREDENTIALS: "true"
+
+      # Logging
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+      LOG_FORMAT: json
+      LOG_FILE_PATH: /app/logs/app.log
+      LOG_MAX_SIZE: 10485760
+      LOG_MAX_FILES: 5
+
+      # Workers
+      KNOWLEDGE_WORKER_SCHEDULE: "0 2 * * *"
+      SOFTWARE_DISCOVERY_WORKER_SCHEDULE: "0 3 * * 0"
+      SOFTWARE_DOC_WORKER_SCHEDULE: "0 4 * * *"
+
+      # Content
+      DEFAULT_CONFIDENCE_LEVEL: medium
+      AUTO_APPROVE_TRUSTED_SOURCES: "false"
+
+      # Performance
+      REQUEST_TIMEOUT_MS: 30000
+      MAX_REQUEST_SIZE: 10mb
+      ENABLE_COMPRESSION: "true"
+      CACHE_TTL_SECONDS: 3600
+
+      # GDPR
+      AUTH_LOG_RETENTION_DAYS: 90
+
+    # Volumes for data persistence
+    volumes:
+      # SQLite database (persistent)
+      - omegaops-data:/app/data
+
+      # Application logs (persistent)
+      - omegaops-logs:/app/logs
+
+      # Optional: Mount .env file for secrets (recommended for production)
+      # - ../backend/.env:/app/backend/.env:ro
+
+    # Networks
+    networks:
+      - web
+
+    # Port mapping (optional, NPM handles external routing)
+    # Expose for direct access or monitoring
+    ports:
+      - "3001:3001"  # Backend API (internal only, not exposed publicly)
+      # Frontend port 80 is exposed via NPM
+
+    # Health check
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost/", "&&", "curl", "-f", "http://localhost:3001/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+    # Resource limits (adjust based on server capacity)
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'      # Max 2 CPU cores
+          memory: 2G       # Max 2GB RAM
+        reservations:
+          cpus: '0.5'      # Reserve 0.5 cores
+          memory: 512M     # Reserve 512MB
+
+    # Logging configuration
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+# ============================================================================
+# NETWORKS
+# ============================================================================
+networks:
+  # External network created by Nginx Proxy Manager
+  # Allows NPM to discover and route to omegaops-academy container
+  web:
+    external: true
+    # If network doesn't exist, create it:
+    # docker network create web
+
+# ============================================================================
+# VOLUMES
+# ============================================================================
+volumes:
+  # Persistent SQLite database
+  omegaops-data:
+    driver: local
+
+  # Application logs
+  omegaops-logs:
+    driver: local

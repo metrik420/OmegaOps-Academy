@@ -359,7 +359,7 @@ export class AuthService {
     input: RegisterInput,
     ipAddress?: string,
     userAgent?: string
-  ): Promise<SafeUser> {
+  ): Promise<{ user: SafeUser; accessToken: string; refreshToken: string; verificationToken: string }> {
     const db = getDatabase();
     const now = new Date().toISOString();
 
@@ -450,6 +450,40 @@ export class AuthService {
       );
 
       /*
+       * Generate JWT tokens for immediate login after registration.
+       * This provides a better UX (user is auto-logged in after signup).
+       */
+      const jwtPayload: JWTPayload = {
+        userId: user.id,
+        email: user.email,
+        username: user.username,
+        isAdmin: false,
+      };
+
+      const accessToken = this.generateAccessToken(jwtPayload);
+
+      /*
+       * Create refresh token with 7-day expiration (default, no rememberMe on registration).
+       */
+      const refreshToken = this.generateToken();
+      const refreshTokenExpiresAt = new Date(
+        Date.now() + REFRESH_TOKEN_EXPIRES_IN_DAYS * 24 * 60 * 60 * 1000
+      ).toISOString();
+
+      db.prepare(`
+        INSERT INTO refresh_tokens (id, userId, token, expiresAt, ipAddress, userAgent, createdAt)
+        VALUES (?, ?, ?, ?, ?, ?, ?)
+      `).run(
+        uuidv4(),
+        userId,
+        refreshToken,
+        refreshTokenExpiresAt,
+        ipAddress || null,
+        userAgent || null,
+        now
+      );
+
+      /*
        * Log successful registration.
        */
       this.logAuthEvent('register', true, userId, ipAddress, userAgent);
@@ -460,10 +494,99 @@ export class AuthService {
         username: user.username,
       });
 
-      return this.toSafeUser(user);
+      return {
+        user: this.toSafeUser(user),
+        accessToken,
+        refreshToken,
+        verificationToken,
+      };
     } catch (error) {
       logger.error('Registration failed', {
         email: input.email,
+        error: error instanceof Error ? error.message : String(error),
+      });
+      throw error;
+    }
+  }
+
+  /**
+   * Resends email verification link to user.
+   *
+   * FLOW:
+   * 1. Find user by email
+   * 2. Check if already verified
+   * 3. Generate new verification token (or reuse if still valid)
+   * 4. Update user record with new token
+   * 5. Send verification email
+   *
+   * @param email - User email address
+   * @returns Promise<{ email: string, verificationToken: string }> - Email and token for sending
+   * @throws Error if user not found or already verified
+   * @complexity O(1) - Single SELECT + UPDATE query
+   * @security Rate limited at route level to prevent abuse
+   */
+  public static async resendVerificationEmail(
+    email: string
+  ): Promise<void> {
+    const db = getDatabase();
+    const now = new Date().toISOString();
+
+    try {
+      /*
+       * Find user by email.
+       */
+      const user = db
+        .prepare('SELECT * FROM users WHERE email = ?')
+        .get(email) as User | undefined;
+
+      if (!user) {
+        /*
+         * Don't reveal if email exists (prevents enumeration).
+         * Return success anyway, but don't actually send email.
+         */
+        logger.warn('Resend verification: User not found', { email });
+        throw new Error('If this email is registered, a verification email will be sent.');
+      }
+
+      /*
+       * Check if already verified.
+       */
+      if (user.isVerified === 1) {
+        throw new Error('Email is already verified. You can log in now.');
+      }
+
+      /*
+       * Generate new verification token.
+       */
+      const verificationToken = this.generateToken();
+      const verificationTokenExpiresAt = new Date(
+        Date.now() + VERIFICATION_TOKEN_EXPIRES_HOURS * 60 * 60 * 1000
+      ).toISOString();
+
+      /*
+       * Update user with new token.
+       */
+      db.prepare(`
+        UPDATE users
+        SET verificationToken = ?,
+            verificationTokenExpiresAt = ?,
+            updatedAt = ?
+        WHERE id = ?
+      `).run(verificationToken, verificationTokenExpiresAt, now, user.id);
+
+      /*
+       * Send verification email.
+       */
+      const { EmailService } = require('./EmailService');
+      await EmailService.sendVerificationEmail(user.email, user.username, verificationToken);
+
+      logger.info('Verification email resent successfully', {
+        userId: user.id,
+        email: user.email,
+      });
+    } catch (error) {
+      logger.error('Resend verification failed', {
+        email,
         error: error instanceof Error ? error.message : String(error),
       });
       throw error;
@@ -1290,14 +1413,44 @@ export class AuthService {
   /**
    * Deletes user account and all associated data (GDPR compliance).
    *
+   * SECURITY NOTE:
+   * - Requires password verification to prevent unauthorized deletion
+   * - This is an irreversible operation
+   * - All user data is permanently removed from the database
+   *
    * @param userId - User ID to delete
-   * @complexity O(n) where n = number of related records
+   * @param password - User's current password (for verification)
+   * @returns Promise<void>
+   * @throws Error if password is incorrect or deletion fails
+   * @complexity O(n) where n = number of related records (bcrypt ~250ms + DB deletes)
    * @security Cascading deletes via foreign keys (ON DELETE CASCADE)
    */
-  public static deleteAccount(userId: string): void {
+  public static async deleteAccount(userId: string, password: string): Promise<void> {
     const db = getDatabase();
 
     try {
+      /*
+       * Fetch user to verify password.
+       */
+      const user = db
+        .prepare('SELECT * FROM users WHERE id = ?')
+        .get(userId) as User | undefined;
+
+      if (!user) {
+        throw new Error('User not found');
+      }
+
+      /*
+       * Verify password before deletion.
+       * This prevents unauthorized account deletion if session is compromised.
+       */
+      const isPasswordValid = await this.verifyPassword(password, user.passwordHash);
+
+      if (!isPasswordValid) {
+        this.logAuthEvent('delete_account', false, userId, null, null, 'Invalid password');
+        throw new Error('Invalid password');
+      }
+
       /*
        * SQLite cascading deletes will automatically remove:
        * - refresh_tokens (FOREIGN KEY ... ON DELETE CASCADE)
@@ -1306,7 +1459,9 @@ export class AuthService {
        */
       db.prepare('DELETE FROM users WHERE id = ?').run(userId);
 
-      logger.info('User account deleted (GDPR)', { userId });
+      this.logAuthEvent('delete_account', true, userId);
+
+      logger.info('User account deleted (GDPR compliance)', { userId });
     } catch (error) {
       logger.error('Account deletion failed', {
         userId,
@@ -1341,12 +1496,12 @@ export class AuthService {
 
       const refreshTokens = db
         .prepare('SELECT * FROM refresh_tokens WHERE userId = ? ORDER BY createdAt DESC')
-        .all(userId);
+        .all(userId) as RefreshToken[];
 
       return {
         user: this.toSafeUser(user),
         authLogs,
-        refreshTokens: refreshTokens.map((token: RefreshToken) => ({
+        refreshTokens: refreshTokens.map((token) => ({
           id: token.id,
           createdAt: token.createdAt,
           expiresAt: token.expiresAt,

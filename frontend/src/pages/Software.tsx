@@ -102,7 +102,7 @@ export function Software() {
   }, []);
 
   const filteredTools = useMemo(() => {
-    let tools = mockTools.filter((tool) => {
+    const tools = mockTools.filter((tool) => {
       const matchesSearch =
         tool.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         tool.description.toLowerCase().includes(searchTerm.toLowerCase());

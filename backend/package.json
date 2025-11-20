@@ -9,6 +9,10 @@
     "dev": "ts-node src/app.ts",
     "lint": "eslint src/**/*.ts",
     "test": "jest --coverage",
+    "db:init": "node -e \"require('./dist/database/db').initializeDatabase(); console.log('Database initialized successfully');\"",
+    "db:reset": "rm -f data/omegaops.db && npm run db:init",
+    "db:seed": "npm run build && node dist/database/seeds/seed.js",
+    "db:admin": "npm run build && node dist/database/seeds/seedAdmin.js",
     "worker:knowledge": "node dist/workers/KnowledgeWorker.js",
     "worker:discovery": "node dist/workers/SoftwareDiscoveryWorker.js",
     "worker:docs": "node dist/workers/SoftwareDocWorker.js"

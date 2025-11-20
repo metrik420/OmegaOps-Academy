@@ -51,6 +51,11 @@ npm run build
 node dist/workers/KnowledgeWorker.js
 node dist/workers/SoftwareDiscoveryWorker.js
 node dist/workers/SoftwareDocWorker.js
+
+# Content Analytics Worker (runs continuously or on schedule)
+node dist/workers/ContentAnalyticsWorker.js              # Run continuously (daemon mode)
+node dist/workers/ContentAnalyticsWorker.js --once       # Run once and exit (cron mode)
+node dist/workers/ContentAnalyticsWorker.js --content=mission/wk1-day1  # Manual content-specific run
 ```
 
 ### Docker & Deployment
@@ -210,6 +215,14 @@ Frontend fetches latest via /api/updates
 - `auth_logs` – Audit trail: id, userId, action (login/logout/verify_email/reset_password), success, failureReason, ipAddress, userAgent, timestamp (90-day retention)
 - `admin_users` – Admin accounts: id, username, password_hash, isActive (currently only 'metrik' user)
 
+### Content Analytics & Monitoring
+- `user_content_interactions` – Granular tracking of every user interaction (view, start, complete, quiz, rate, feedback)
+- `content_metrics` – Aggregated performance metrics (completion rate, quiz pass rate, health score, trending)
+- `content_recommendations` – Auto-generated actionable recommendations (refresh, simplify, expand, remove, clarify)
+- `content_feedback` – User-submitted feedback and bug reports (typos, outdated content, difficulty issues)
+- `content_audit_log` – Complete change history with before/after snapshots (rollback capability)
+- `content_cohort_analysis` – Cohort-based performance analysis (mobile vs desktop, early adopters vs later users)
+
 ### Optional: User Progress
 - `user_progress` – XP, level, streak, completed missions/labs
 - `user_reflections` – Daily reflection journal entries
@@ -306,6 +319,25 @@ Frontend fetches latest via /api/updates
 - `POST /api/auth/change-password` – Change password (authenticated, 200 OK)
 - `POST /api/auth/export-data` – GDPR data export (authenticated, 200 OK)
 - `DELETE /api/auth/account` – Delete account (authenticated, requires password, 200 OK)
+
+### Content Analytics Endpoints (User-Facing)
+- `POST /api/content/:id/track` – Track user interaction (view, start, complete, quiz, rate) [auth required]
+- `POST /api/content/:id/rate` – Rate content (difficulty, clarity, satisfaction) [auth required]
+- `POST /api/content/:id/feedback` – Submit feedback/bug report [auth required]
+- `GET /api/content/:id/metrics` – Public metrics for content (completion rate, avg rating) [public]
+
+### Content Analytics Endpoints (Admin)
+- `GET /api/admin/analytics/dashboard` – Complete dashboard summary (health grid, top performers, recommendations)
+- `GET /api/admin/analytics/content/:id` – Detailed metrics for single content item
+- `GET /api/admin/analytics/week/:week` – Metrics for entire week (missions + lab)
+- `GET /api/admin/analytics/trending` – Trending content insights (trending up/down, needs refresh/removal)
+- `GET /api/admin/analytics/recommendations` – List all recommendations (filtered by status)
+- `POST /api/admin/analytics/recommendations/:id/action` – Act on recommendation (implemented, declined, dismissed)
+- `GET /api/admin/analytics/feedback` – List feedback queue (filtered by status, severity)
+- `POST /api/admin/analytics/feedback/:id/respond` – Respond to user feedback
+- `POST /api/admin/analytics/feedback/:id/severity` – Update feedback severity
+- `GET /api/admin/analytics/reports/feedback` – Feedback report (aggregated stats)
+- `GET /api/admin/analytics/reports/top-issues` – Top reported content items
 
 ### Optional: User Progress
 - `GET /api/progress` – User's XP, level, streak

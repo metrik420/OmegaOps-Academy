@@ -18,7 +18,6 @@
 
 import { Router, Request, Response, NextFunction } from 'express';
 import { AuthService } from '../../services/AuthService';
-import { EmailService } from '../../services/EmailService';
 import { authMiddleware } from '../middleware/authMiddleware';
 import {
   registerSchema,
@@ -42,18 +41,15 @@ import { ZodError } from 'zod';
 const router = Router();
 
 /**
- * AuthService singleton instance.
- * Handles all authentication business logic: user registration, login,
- * token generation/validation, password hashing/verification, etc.
+ * SECURITY NOTE: AuthService and EmailService use static methods only.
+ * This design choice ensures:
+ * 1. No shared state between requests (thread-safe)
+ * 2. Stateless authentication logic (all state in database)
+ * 3. Clear separation between service logic and route handling
+ * 4. Memory efficiency (no need for singleton instances)
+ *
+ * All methods are called directly on the class: AuthService.method(), EmailService.method()
  */
-const authService = new AuthService();
-
-/**
- * EmailService singleton instance.
- * Sends transactional emails: verification emails, password reset emails.
- * Configured with SMTP settings from environment variables.
- */
-const emailService = new EmailService();
 
 /**
  * Async error handler wrapper.
@@ -119,27 +115,19 @@ router.post(
         });
       }
 
-      // Register user: hash password (Argon2id), create user record, generate verification token
-      const result = await authService.register({
-        email: validatedData.email,
-        username: validatedData.username,
-        password: validatedData.password,
-        acceptPrivacyPolicy: validatedData.acceptPrivacyPolicy,
-      });
-
-      // Send verification email asynchronously (non-blocking)
-      // Email contains link with verification token (short-lived, single-use)
-      emailService
-        .sendVerificationEmail(result.user.email, result.verificationToken!)
-        .catch((emailError) => {
-          // Log email failure but don't block registration response
-          // User can request resend via /resend-verification endpoint
-          logger.error('Failed to send verification email', {
-            userId: result.user.id,
-            email: result.user.email,
-            error: emailError.message,
-          });
-        });
+      // Register user: hash password (bcrypt cost 12), create user record, generate verification token
+      // NOTE: AuthService.register() automatically sends verification email internally
+      const result = await AuthService.register(
+        {
+          email: validatedData.email,
+          username: validatedData.username,
+          password: validatedData.password,
+          confirmPassword: validatedData.confirmPassword,
+          acceptPrivacyPolicy: validatedData.acceptPrivacyPolicy,
+        },
+        req.ip,
+        req.get('user-agent')
+      );
 
       // Set httpOnly cookies for access and refresh tokens
       // Access token: short-lived (15min), refresh token: long-lived (7d or 30d if rememberMe)
@@ -167,9 +155,9 @@ router.post(
             id: result.user.id,
             email: result.user.email,
             username: result.user.username,
-            isEmailVerified: result.user.isEmailVerified,
-            isAdmin: result.user.isAdmin,
-            joinedAt: result.user.joinedAt,
+            isVerified: result.user.isVerified,
+            lastLoginAt: result.user.lastLoginAt,
+            createdAt: result.user.createdAt,
           },
           accessToken: result.accessToken,
           refreshToken: result.refreshToken,
@@ -258,7 +246,7 @@ router.post(
       const validatedData = loginSchema.parse(req.body);
 
       // Authenticate user: verify password, check account status, update last login timestamp
-      const result = await authService.login({
+      const result = await AuthService.login({
         email: validatedData.email,
         password: validatedData.password,
         rememberMe: validatedData.rememberMe,
@@ -294,10 +282,9 @@ router.post(
             id: result.user.id,
             email: result.user.email,
             username: result.user.username,
-            isEmailVerified: result.user.isEmailVerified,
-            isAdmin: result.user.isAdmin,
-            joinedAt: result.user.joinedAt,
+            isVerified: result.user.isVerified,
             lastLoginAt: result.user.lastLoginAt,
+            createdAt: result.user.createdAt,
           },
           accessToken: result.accessToken,
           refreshToken: result.refreshToken,
@@ -423,41 +410,34 @@ router.post(
       }
 
       // Authenticate admin: verify password, ensure isAdmin flag is true
-      const result = await authService.adminLogin({
+      const result = await AuthService.adminLogin({
         username: validatedData.username,
         password: validatedData.password,
       });
 
-      // Set httpOnly cookies for tokens (admin sessions have same expiry as regular users)
+      // Set httpOnly cookie for access token (admins don't get refresh tokens)
       res.cookie('accessToken', result.accessToken, {
         ...cookieOptions,
         maxAge: 15 * 60 * 1000, // 15 minutes
       });
 
-      res.cookie('refreshToken', result.refreshToken, {
-        ...cookieOptions,
-        maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
-      });
-
       logger.info('Admin logged in successfully', {
-        userId: result.user.id,
-        username: result.user.username,
+        adminId: result.admin.id,
+        username: result.admin.username,
       });
 
       return res.status(200).json({
         success: true,
         data: {
-          user: {
-            id: result.user.id,
-            email: result.user.email,
-            username: result.user.username,
-            isEmailVerified: result.user.isEmailVerified,
-            isAdmin: result.user.isAdmin,
-            joinedAt: result.user.joinedAt,
-            lastLoginAt: result.user.lastLoginAt,
+          admin: {
+            id: result.admin.id,
+            email: result.admin.email,
+            username: result.admin.username,
+            isActive: result.admin.isActive,
+            lastLoginAt: result.admin.lastLoginAt,
+            createdAt: result.admin.createdAt,
           },
           accessToken: result.accessToken,
-          refreshToken: result.refreshToken,
         },
       });
     } catch (error) {
@@ -563,7 +543,7 @@ router.post(
 
       // Refresh tokens: verify refresh token, generate new access + refresh tokens
       // Old refresh token is revoked to prevent reuse (rotation strategy)
-      const result = await authService.refreshAccessToken(validatedData.refreshToken);
+      const result = await AuthService.refreshToken(validatedData.refreshToken);
 
       // Set new httpOnly cookies
       res.cookie('accessToken', result.accessToken, {
@@ -577,7 +557,7 @@ router.post(
       });
 
       logger.info('Token refreshed successfully', {
-        userId: result.userId,
+        userId: result.user.id,
       });
 
       return res.status(200).json({
@@ -683,7 +663,7 @@ router.post(
 
       // Revoke current refresh token (if present)
       if (refreshToken) {
-        await authService.logout(userId, refreshToken);
+        AuthService.logout(refreshToken);
       }
 
       // Clear httpOnly cookies
@@ -757,7 +737,7 @@ router.post(
       }
 
       // Revoke all refresh tokens for user (logout from all devices)
-      await authService.logoutAll(userId);
+      await AuthService.logoutAll(userId);
 
       // Clear httpOnly cookies for current session
       res.clearCookie('accessToken', cookieOptions);
@@ -817,7 +797,7 @@ router.post(
       const validatedData = verifyEmailSchema.parse(req.body);
 
       // Verify email: check token validity, update user.isEmailVerified = true
-      await authService.verifyEmail(validatedData.token);
+      await AuthService.verifyEmail(validatedData.token);
 
       logger.info('Email verified successfully', {
         token: validatedData.token.substring(0, 10) + '...', // Log partial token for debugging
@@ -938,19 +918,8 @@ router.post(
       }
 
       // Generate new verification token and send email
-      const result = await authService.resendVerificationEmail(email);
-
-      // Send verification email asynchronously
-      emailService
-        .sendVerificationEmail(result.email, result.verificationToken)
-        .catch((emailError) => {
-          logger.error('Failed to send verification email', {
-            email: result.email,
-            error: emailError.message,
-          });
-        });
-
-      logger.info('Verification email resent successfully', { email });
+      // NOTE: AuthService.resendVerificationEmail() sends the email internally
+      await AuthService.resendVerificationEmail(email);
 
       return res.status(200).json({
         success: true,
@@ -1053,25 +1022,15 @@ router.post(
       // Validate email format
       const validatedData = forgotPasswordSchema.parse(req.body);
 
-      // Generate password reset token
-      // If user not found, AuthService may throw error or return silently (implementation choice)
+      // Generate password reset token and send email
+      // NOTE: AuthService.forgotPassword() sends the email internally
+      // If user not found, it returns silently (same response to prevent enumeration)
       try {
-        const result = await authService.forgotPassword(validatedData.email);
-
-        // Send password reset email asynchronously
-        emailService
-          .sendPasswordResetEmail(result.email, result.resetToken)
-          .catch((emailError) => {
-            logger.error('Failed to send password reset email', {
-              email: result.email,
-              error: emailError.message,
-            });
-          });
-
-        logger.info('Password reset email sent successfully', { email: validatedData.email });
+        await AuthService.forgotPassword(validatedData, req.ip);
+        logger.info('Password reset requested', { email: validatedData.email });
       } catch (serviceError) {
         // Log error but return success to prevent user enumeration
-        logger.warn('Password reset failed: User not found (returning success to prevent enumeration)', {
+        logger.warn('Password reset failed (returning success to prevent enumeration)', {
           email: validatedData.email,
           error: serviceError instanceof Error ? serviceError.message : 'Unknown error',
         });
@@ -1146,23 +1105,10 @@ router.post(
       // Validate reset token and new password
       const validatedData = resetPasswordSchema.parse(req.body);
 
-      // Ensure password confirmation matches
-      if (validatedData.newPassword !== validatedData.confirmPassword) {
-        logger.warn('Password reset failed: Password mismatch', { ip: req.ip });
-        return res.status(400).json({
-          success: false,
-          error: {
-            message: 'Passwords do not match',
-            code: 'PASSWORD_MISMATCH',
-          },
-        });
-      }
+      // Note: password confirmation is validated by Zod schema's refine() method
 
       // Reset password: verify token, hash new password, update user, revoke all refresh tokens
-      await authService.resetPassword({
-        token: validatedData.token,
-        newPassword: validatedData.newPassword,
-      });
+      await AuthService.resetPassword(validatedData);
 
       logger.info('Password reset successfully', {
         token: validatedData.token.substring(0, 10) + '...', // Log partial token for debugging
@@ -1273,24 +1219,10 @@ router.post(
       // Validate current and new passwords
       const validatedData = changePasswordSchema.parse(req.body);
 
-      // Ensure password confirmation matches
-      if (validatedData.newPassword !== validatedData.confirmPassword) {
-        logger.warn('Password change failed: Password mismatch', { userId, ip: req.ip });
-        return res.status(400).json({
-          success: false,
-          error: {
-            message: 'Passwords do not match',
-            code: 'PASSWORD_MISMATCH',
-          },
-        });
-      }
+      // Note: password confirmation is validated by Zod schema's refine() method
 
       // Change password: verify current password, hash new password, update user, revoke all refresh tokens
-      await authService.changePassword({
-        userId,
-        currentPassword: validatedData.currentPassword,
-        newPassword: validatedData.newPassword,
-      });
+      await AuthService.changePassword(userId, validatedData);
 
       // Clear current session cookies (user must log in with new password)
       res.clearCookie('accessToken', cookieOptions);
@@ -1470,7 +1402,7 @@ router.post(
       }
 
       // Export all user data: account info, login history, sessions, etc.
-      const userData = await authService.exportUserData(userId);
+      const userData = await AuthService.exportUserData(userId);
 
       logger.info('User data exported successfully', { userId });
 
@@ -1538,10 +1470,7 @@ router.delete(
       const validatedData = deleteAccountSchema.parse(req.body);
 
       // Delete account: verify password, delete user record and all associated data
-      await authService.deleteAccount({
-        userId,
-        password: validatedData.password,
-      });
+      await AuthService.deleteAccount(userId, validatedData.password);
 
       // Clear httpOnly cookies
       res.clearCookie('accessToken', cookieOptions);

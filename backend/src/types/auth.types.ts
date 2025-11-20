@@ -244,6 +244,23 @@ export type VerifyEmailInput = z.infer<typeof verifyEmailSchema>;
 
 /**
  * ==========================================================================
+ * RESEND VERIFICATION EMAIL SCHEMA
+ * ==========================================================================
+ * Validates request to resend email verification link.
+ *
+ * SECURITY NOTE:
+ * - Rate limited to prevent abuse (60-second cooldown between requests)
+ * - Same token reused if still valid (prevents token flooding)
+ * - New token generated if expired
+ */
+export const resendVerificationSchema = z.object({
+  email: emailSchema,
+});
+
+export type ResendVerificationInput = z.infer<typeof resendVerificationSchema>;
+
+/**
+ * ==========================================================================
  * REFRESH TOKEN SCHEMA
  * ==========================================================================
  * Validates refresh token for JWT renewal.
@@ -258,6 +275,24 @@ export const refreshTokenSchema = z.object({
 });
 
 export type RefreshTokenInput = z.infer<typeof refreshTokenSchema>;
+
+/**
+ * ==========================================================================
+ * DELETE ACCOUNT SCHEMA
+ * ==========================================================================
+ * Validates account deletion request.
+ *
+ * SECURITY NOTE:
+ * - Requires current password to prevent unauthorized deletion
+ * - GDPR compliance: All user data is permanently deleted
+ * - Action is irreversible (no soft delete)
+ * - All refresh tokens revoked before deletion
+ */
+export const deleteAccountSchema = z.object({
+  password: z.string().min(1, 'Password is required to delete account'),
+});
+
+export type DeleteAccountInput = z.infer<typeof deleteAccountSchema>;
 
 /**
  * ==========================================================================
