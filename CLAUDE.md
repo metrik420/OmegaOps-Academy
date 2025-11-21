@@ -59,20 +59,25 @@ node dist/workers/ContentAnalyticsWorker.js --content=mission/wk1-day1  # Manual
 ```
 
 ### Docker & Deployment
+
+**CRITICAL: Use Dockerfile.production for production deployments**
+
 ```bash
-# Build image
-docker build -f docker/Dockerfile -t omegaops-academy:latest .
+# Production deployment (CORRECT - includes both frontend + backend)
+docker-compose -f docker/docker-compose.production.yml build
+docker-compose -f docker/docker-compose.production.yml up -d
+docker-compose -f docker/docker-compose.production.yml logs -f omegaops-academy
 
-# Run with docker-compose
-cd docker
-docker-compose up -d
-
-# View logs
-docker-compose logs -f omegaops-academy
+# Development with separate services
+# Frontend: cd frontend && npm run dev
+# Backend: cd backend && npm run dev
+# Test API: curl http://localhost:3001/api/missions
 
 # Stop services
-docker-compose down
+docker-compose -f docker/docker-compose.production.yml down
 ```
+
+**Important:** Never use the simple `docker/Dockerfile` for production - it only includes Nginx and will fail with 502 Bad Gateway errors when the backend tries to connect to `localhost:3001` inside the container. The `Dockerfile.production` includes both Nginx and Node.js backend managed by supervisor.
 
 ### Code Quality
 ```bash
@@ -768,6 +773,14 @@ npm run lint && npm run format && npm run type-check && npm run test
 - Check multi-stage build output: `docker build --progress=plain`
 - Verify nginx.conf SPA routing with `docker logs container-id`
 - Ensure volumes are mounted for persistence (DB files)
+
+**502 Bad Gateway Errors (Critical):**
+- **Root Cause:** Using wrong Dockerfile (frontend-only) in docker-compose.production.yml
+- **Symptom:** API calls return 502, error logs show "connect() failed (111: Connection refused)" when Nginx tries to reach `localhost:3001`
+- **Solution:** Ensure `docker/docker-compose.production.yml` uses `dockerfile: docker/Dockerfile.production` (NOT `docker/Dockerfile`)
+- **Why:** `Dockerfile.production` includes both Nginx AND Node.js backend in one container, so they can communicate on localhost:3001
+- **Verification:** After fix, `curl http://localhost/api/missions` should return JSON data, not 502 error
+- **Check Nginx logs:** `docker logs <container> | grep "502\|connect.*failed"` - will show connection refused if backend isn't running
 
 ---
 
