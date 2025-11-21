@@ -1,11 +1,20 @@
 /**
  * FILE: src/pages/Admin.tsx
  * PURPOSE: Admin panel for managing updates and reviewing pending items.
+ * INPUTS: Admin authentication via AuthContext (username='metrik')
+ * OUTPUTS: Admin dashboard with pending updates and software management
+ * NOTES:
+ *   - Protected by AdminRoute component (redirects to /admin/login if not admin)
+ *   - Admin status: user.username === 'metrik' (from authStore)
+ *   - Uses NEW auth system (AuthContext/authStore), not old store-based auth
+ * SECURITY:
+ *   - Admin-only access enforced by AdminRoute guard
+ *   - Backend must also enforce admin authorization (defense in depth)
  */
 
-import { useState } from 'react';
-import { Shield, Lock, CheckCircle, XCircle, AlertTriangle } from 'lucide-react';
-import { useStore, useIsAdminAuthenticated } from '@/store';
+import { useAuth, useLogout } from '@/contexts/AuthContext';
+import { useStore } from '@/store';
+import { Shield, CheckCircle, XCircle, AlertTriangle } from 'lucide-react';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import Badge from '@/components/Badge';
 import styles from './Admin.module.css';
@@ -20,59 +29,36 @@ const mockPendingSoftware = [
   { id: 'tool-2', name: 'ArgoCD', category: 'ci-cd', discovered: '2025-01-14' },
 ];
 
+/**
+ * Admin component - main admin dashboard.
+ * NOTE: This component is wrapped by AdminRoute, so it's only rendered if user is admin.
+ * WHY: AdminRoute handles auth checks and redirects; this component focuses on admin UI.
+ */
 export function Admin() {
-  const isAuthenticated = useIsAdminAuthenticated();
-  const { setAdminAuth, addToast } = useStore();
-  const [password, setPassword] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
-
-  const handleLogin = (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsLoading(true);
-
-    // Mock authentication - in production would call API
-    setTimeout(() => {
-      if (password === 'admin123') {
-        setAdminAuth(true);
-        addToast({ type: 'success', message: 'Admin login successful!' });
-      } else {
-        addToast({ type: 'error', message: 'Invalid password.' });
-      }
-      setIsLoading(false);
-      setPassword('');
-    }, 1000);
-  };
+  const { user, isLoading } = useAuth();
+  const { execute: logout, isLoading: isLoggingOut } = useLogout();
+  const { addToast } = useStore();
 
   const handleAction = (action: string, id: string) => {
     addToast({ type: 'info', message: `${action} action triggered for ${id}` });
   };
 
-  if (!isAuthenticated) {
+  const handleLogout = async () => {
+    try {
+      await logout();
+      addToast({ type: 'success', message: 'Logged out successfully' });
+    } catch (error) {
+      addToast({ type: 'error', message: 'Logout failed. Please try again.' });
+    }
+  };
+
+  // Show loading spinner if auth state is loading
+  // WHY: Prevents flash of content before auth state is loaded
+  if (isLoading) {
     return (
       <div className={styles.loginContainer}>
-        <div className={styles.loginCard}>
-          <div className={styles.loginIcon}>
-            <Lock size={32} />
-          </div>
-          <h2 className={styles.loginTitle}>Admin Access Required</h2>
-          <p className={styles.loginDescription}>Enter admin password to continue.</p>
-
-          <form onSubmit={handleLogin} className={styles.loginForm}>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="Password"
-              className={styles.passwordInput}
-              required
-            />
-            <button type="submit" className={styles.loginButton} disabled={isLoading}>
-              {isLoading ? <LoadingSpinner size="sm" /> : 'Login'}
-            </button>
-          </form>
-
-          <p className={styles.hint}>Demo password: admin123</p>
-        </div>
+        <LoadingSpinner size="lg" />
+        <p style={{ marginTop: '1rem', color: 'var(--text-secondary)' }}>Loading admin panel...</p>
       </div>
     );
   }
@@ -83,13 +69,15 @@ export function Admin() {
         <h1 className={styles.title}>
           <Shield size={28} aria-hidden="true" />
           Admin Panel
+          {user && <span className={styles.username}>({user.username})</span>}
         </h1>
         <button
           type="button"
-          onClick={() => setAdminAuth(false)}
+          onClick={handleLogout}
           className={styles.logoutButton}
+          disabled={isLoggingOut}
         >
-          Logout
+          {isLoggingOut ? 'Logging out...' : 'Logout'}
         </button>
       </header>
 

@@ -33,7 +33,7 @@ services:
       dockerfile: docker/Dockerfile.production
 
     # Image name and tag
-    image: omegaops-academy:latest
+    image: omegaops-academy:production
 
     # Restart policy
     restart: unless-stopped
@@ -131,8 +131,8 @@ services:
     # Port mapping (optional, NPM handles external routing)
     # Expose for direct access or monitoring
     ports:
+      # - "80:80"      # Frontend (Nginx) - Handled by Nginx Proxy Manager
       - "3001:3001"  # Backend API (internal only, not exposed publicly)
-      # Frontend port 80 is exposed via NPM
 
     # Health check
     healthcheck:

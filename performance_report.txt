@@ -1,0 +1,48 @@
+=== PERFORMANCE AUDIT ===
+
+=== API RESPONSE TIMES (target <200ms) ===
+Round 1 - /api/missions: 1ms
+Round 2 - /api/missions: 1ms
+Round 3 - /api/missions: 1ms
+Round 4 - /api/missions: 1ms
+Round 5 - /api/missions: 1ms
+
+=== BUNDLE SIZES ===
+Frontend dist size:
+512K	/home/metrik/docker/learn/frontend/dist
+
+Backend dist size:
+1.1M	/home/metrik/docker/learn/backend/dist
+
+=== DATABASE PERFORMANCE ===
+Database size:
+264K
+
+Table sizes:
+missions|1
+labs|1
+knowledge_topics|1
+software_tools|1
+pending_updates|1
+changelog|1
+users|1
+refresh_tokens|1
+password_reset_tokens|1
+auth_logs|1
+admin_users|1
+
+=== FRONTEND BUILD INFO ===
+index.html size: 3.1K
+
+JavaScript bundles:
+/home/metrik/docker/learn/frontend/dist/assets/icons-C6wFRXha.js 18K
+/home/metrik/docker/learn/frontend/dist/assets/http-l0sNRNKZ.js 1
+/home/metrik/docker/learn/frontend/dist/assets/state-BmduYldp.js 637
+/home/metrik/docker/learn/frontend/dist/assets/index-CHCojHd_.js 189K
+/home/metrik/docker/learn/frontend/dist/assets/router-BQSNQ14J.js 23K
+
+=== PERFORMANCE SUMMARY ===
+API avg response time: <100ms (EXCELLENT)
+Frontend bundle: 512K (ACCEPTABLE)
+Backend compiled: 1.1M (ACCEPTABLE)
+Database size: 264K (SMALL)

@@ -106,11 +106,8 @@ COPY backend/.env.example .env
 # -----------------------------------------------------------------------------
 COPY docker/supervisord.conf /etc/supervisord.conf
 
-# Set ownership
+# Set ownership (for files, but keep root as user for supervisor to manage both services)
 RUN chown -R omegaops:omegaops /app
-
-# Switch to non-root user
-USER omegaops
 
 WORKDIR /app
 

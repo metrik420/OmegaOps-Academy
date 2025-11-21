@@ -1,0 +1,200 @@
+{
+  "week": 1,
+  "theme": "Linux & systemd Basics",
+  "labs": [
+    {
+      "id": "wk1-lab-troubleshooting",
+      "week": 1,
+      "title": "Emergency: Critical Service Down",
+      "description": "A production web server is down. Multiple services have failed. You have 60 minutes to diagnose the issues and restore service before customers revolt.",
+      "difficulty": "beginner",
+      "xpReward": 200,
+      "estimatedTime": "45-60 minutes",
+      "scenarioDescription": "**SITUATION:**\n\nIt's 3 AM. Your phone is ringing. The automated monitoring system is sending critical alerts. The company website is down with a 502 Bad Gateway error. You SSH into the server and immediately notice several problems:\n\n1. The Nginx web server is not responding\n2. Disk usage is at 100%\n3. Several processes are in a zombie state\n4. The application backend service has crashed\n5. File permissions on /var/www are incorrect\n\n**YOUR MISSION:**\n\nYou have 60 minutes to:\n- Identify all issues causing the outage\n- Fix each problem systematically\n- Restore all services to healthy state\n- Verify the website is accessible again\n- Document what went wrong and how you fixed it\n\n**THE STAKES:**\n\nEvery minute of downtime costs the company $5,000 in lost revenue. The CEO is watching. Your manager is panicking. This is your chance to prove you're a real sysadmin.\n\n**SCENARIO SETUP (For Docker Lab Environment):**\n\nThis lab is designed to be run in a Docker container with intentionally broken services. Admins can create the scenario with:\n\n```dockerfile\nFROM ubuntu:22.04\nRUN apt update && apt install -y nginx php-fpm\n# Intentionally fill disk with logs\nRUN dd if=/dev/zero of=/var/log/bigfile bs=1M count=5000\n# Break file permissions\nRUN chmod 000 /var/www/html\n# Configure nginx to point to broken backend\nCOPY broken-nginx.conf /etc/nginx/sites-enabled/default\n# Disable services\nRUN systemctl disable nginx php-fpm\n```\n\nStudents will need to:\n1. Identify services that should be running\n2. Check disk space and clean up\n3. Fix file permissions\n4. Configure services correctly\n5. Start and enable all required services",
+      "objectives": [
+        "Diagnose why Nginx web server is not running",
+        "Identify and fix disk space issues",
+        "Repair file permissions on web root directory",
+        "Restart crashed application services",
+        "Verify all services are running and enabled",
+        "Test website accessibility from external perspective",
+        "Document root causes and remediation steps"
+      ],
+      "hints": [
+        "HINT 1 - Where to Start: Always check service status first. Run 'systemctl status nginx' and 'systemctl status php-fpm' to see what's actually running.",
+        "HINT 2 - Disk Space: Use 'df -h' to check disk usage. If /var is full, check 'du -sh /var/log/*' to find large log files. Clean up with 'sudo rm' or 'sudo truncate -s 0 filename'.",
+        "HINT 3 - File Permissions: Web server needs to read files in /var/www. Check current permissions with 'ls -ld /var/www/html'. Fix with 'sudo chmod 755 /var/www/html' and 'sudo chown -R www-data:www-data /var/www/html'.",
+        "HINT 4 - Service Dependencies: Some services depend on others. For example, Nginx might need PHP-FPM running if you're serving PHP applications. Start dependencies first.",
+        "HINT 5 - Verification: After fixing everything, verify from multiple angles: 'systemctl status servicename', 'curl http://localhost', 'ps aux | grep nginx', and test from external browser.",
+        "HINT 6 - Enable Services: Even if you start services, they won't survive a reboot unless enabled. Use 'sudo systemctl enable nginx' and 'sudo systemctl enable php-fpm'.",
+        "HINT 7 - Logs Are Your Friend: If a service fails to start, check logs: 'journalctl -u nginx -n 50' or 'tail -f /var/log/nginx/error.log'.",
+        "HINT 8 - Test as You Go: Fix one issue, verify it's fixed, then move to the next. Don't try to fix everything at once.",
+        "HINT 9 - Zombie Processes: Zombie processes (Z state in ps aux) are harmless and will be cleaned up by systemd. Focus on the real issues first.",
+        "HINT 10 - Final Test: Use 'curl -I http://localhost' to test from command line. Expect 'HTTP/1.1 200 OK' or 'HTTP/1.1 301' (not 502)."
+      ],
+      "acceptanceCriteria": [
+        {
+          "criterion": "Nginx service is active and running",
+          "verification": "systemctl is-active nginx returns 'active'",
+          "command": "systemctl is-active nginx"
+        },
+        {
+          "criterion": "Nginx service is enabled for auto-start",
+          "verification": "systemctl is-enabled nginx returns 'enabled'",
+          "command": "systemctl is-enabled nginx"
+        },
+        {
+          "criterion": "Disk usage is below 90%",
+          "verification": "df -h shows /var below 90% usage",
+          "command": "df -h | grep -E '^/dev/.*var' | awk '{print $5}' | sed 's/%//'"
+        },
+        {
+          "criterion": "File permissions on /var/www/html are correct",
+          "verification": "ls -ld /var/www/html shows drwxr-xr-x or similar",
+          "command": "ls -ld /var/www/html"
+        },
+        {
+          "criterion": "Website returns HTTP 200 or 301",
+          "verification": "curl -I http://localhost shows HTTP/1.1 200 or 301",
+          "command": "curl -o /dev/null -s -w '%{http_code}' http://localhost"
+        },
+        {
+          "criterion": "No critical services in failed state",
+          "verification": "systemctl list-units --state=failed shows no critical services",
+          "command": "systemctl list-units --type=service --state=failed"
+        }
+      ],
+      "troubleshootingSteps": [
+        {
+          "step": 1,
+          "title": "Check Service Status",
+          "description": "Identify which services are down",
+          "commands": [
+            "systemctl status nginx",
+            "systemctl status php-fpm",
+            "systemctl list-units --type=service --state=failed"
+          ]
+        },
+        {
+          "step": 2,
+          "title": "Check Disk Space",
+          "description": "Identify disk space issues",
+          "commands": [
+            "df -h",
+            "du -sh /var/log/*",
+            "du -sh /var/www/*"
+          ]
+        },
+        {
+          "step": 3,
+          "title": "Clean Up Disk Space",
+          "description": "Remove large unnecessary files",
+          "commands": [
+            "sudo truncate -s 0 /var/log/bigfile",
+            "sudo rm /var/log/bigfile",
+            "sudo journalctl --vacuum-size=100M"
+          ]
+        },
+        {
+          "step": 4,
+          "title": "Check File Permissions",
+          "description": "Verify web root permissions",
+          "commands": [
+            "ls -ld /var/www/html",
+            "ls -la /var/www/html/"
+          ]
+        },
+        {
+          "step": 5,
+          "title": "Fix File Permissions",
+          "description": "Restore correct permissions",
+          "commands": [
+            "sudo chmod 755 /var/www/html",
+            "sudo chown -R www-data:www-data /var/www/html"
+          ]
+        },
+        {
+          "step": 6,
+          "title": "Start Services",
+          "description": "Start all required services",
+          "commands": [
+            "sudo systemctl start nginx",
+            "sudo systemctl start php-fpm"
+          ]
+        },
+        {
+          "step": 7,
+          "title": "Enable Services",
+          "description": "Ensure services start on boot",
+          "commands": [
+            "sudo systemctl enable nginx",
+            "sudo systemctl enable php-fpm"
+          ]
+        },
+        {
+          "step": 8,
+          "title": "Verify Services",
+          "description": "Confirm all services are healthy",
+          "commands": [
+            "systemctl status nginx",
+            "systemctl status php-fpm",
+            "curl -I http://localhost"
+          ]
+        }
+      ],
+      "learningOutcomes": [
+        "Systematic troubleshooting methodology (check, diagnose, fix, verify)",
+        "Disk space management and cleanup",
+        "File permissions repair",
+        "Service management with systemd",
+        "Service dependency understanding",
+        "Verification and testing techniques",
+        "Documentation of incidents and resolutions"
+      ],
+      "sources": [
+        {
+          "id": "src-nginx-troubleshooting",
+          "name": "Nginx Troubleshooting Guide",
+          "url": "https://nginx.org/en/docs/debugging_log.html",
+          "confidenceLevel": "high"
+        },
+        {
+          "id": "src-linux-disk-space",
+          "name": "Linux Disk Space Management",
+          "url": "https://www.redhat.com/sysadmin/linux-disk-space",
+          "confidenceLevel": "high"
+        },
+        {
+          "id": "src-systemd-troubleshooting",
+          "name": "systemd Troubleshooting",
+          "url": "https://www.freedesktop.org/software/systemd/man/systemctl.html",
+          "confidenceLevel": "high"
+        }
+      ],
+      "dockerLabSetup": {
+        "dockerfile": "FROM ubuntu:22.04\n\n# Install necessary packages\nRUN apt update && apt install -y \\\n    nginx \\\n    php-fpm \\\n    curl \\\n    systemd \\\n    && apt clean\n\n# Create intentional issues\n# Issue 1: Fill disk with large log file\nRUN dd if=/dev/zero of=/var/log/fake-large-log bs=1M count=5000\n\n# Issue 2: Break file permissions on web root\nRUN chmod 000 /var/www/html\nRUN chown nobody:nogroup /var/www/html\n\n# Issue 3: Create broken nginx config (points to non-existent backend)\nRUN echo 'server {\\n\\\n    listen 80;\\n\\\n    location / {\\n\\\n        proxy_pass http://localhost:9999;\\n\\\n    }\\n\\\n}' > /etc/nginx/sites-enabled/broken\n\n# Issue 4: Disable services so they don't auto-start\nRUN systemctl disable nginx\nRUN systemctl disable php8.1-fpm || systemctl disable php-fpm\n\n# Add a simple test page\nRUN echo '<h1>OmegaOps Academy - Week 1 Lab</h1><p>If you see this, you fixed it!</p>' > /var/www/html/index.html\n\nCMD [\"/lib/systemd/systemd\"]",
+        "buildCommand": "docker build -t omegaops-week1-lab -f Dockerfile .",
+        "runCommand": "docker run -d --name week1-lab --privileged -p 8080:80 omegaops-week1-lab",
+        "accessCommand": "docker exec -it week1-lab /bin/bash",
+        "cleanupCommand": "docker stop week1-lab && docker rm week1-lab"
+      },
+      "bonusChallenges": [
+        {
+          "title": "Performance Optimization",
+          "description": "After fixing the core issues, optimize Nginx configuration for better performance",
+          "xpBonus": 50
+        },
+        {
+          "title": "Monitoring Setup",
+          "description": "Set up a simple monitoring script that alerts when disk usage exceeds 80%",
+          "xpBonus": 50
+        },
+        {
+          "title": "Automated Cleanup",
+          "description": "Create a cron job to automatically clean old log files weekly",
+          "xpBonus": 50
+        }
+      ]
+    }
+  ]
+}
