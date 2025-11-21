@@ -27,7 +27,7 @@ services:
     container_name: omegaops-academy
     hostname: omegaops-academy
 
-    # Build from production Dockerfile
+    # Build from production Dockerfile (Nginx + Node.js backend + supervisor)
     build:
       context: ..  # Project root (/home/metrik/docker/learn)
       dockerfile: docker/Dockerfile.production
@@ -136,7 +136,7 @@ services:
 
     # Health check
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost/", "&&", "curl", "-f", "http://localhost:3001/health"]
+      test: ["CMD-SHELL", "curl -f http://localhost/ && curl -f http://localhost:3001/health || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 3
